@@ -1,0 +1,35 @@
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "node:path";
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      "@app": path.resolve(__dirname, "./src/app"),
+      "@shared": path.resolve(__dirname, "./src/shared"),
+      "@pages": path.resolve(__dirname, "./src/pages"),
+      "@features": path.resolve(__dirname, "./src/features"),
+      "@widgets": path.resolve(__dirname, "./src/widgets"),
+    },
+  },
+  server: {
+    host: true,
+    port: 5173,
+    strictPort: true,
+    allowedHosts: ["frontend", "localhost", "127.0.0.1"],
+    watch: {
+      usePolling: true,
+    },
+    proxy: {
+      "/api": {
+        target: process.env.VITE_API_PROXY_TARGET ?? "http://127.0.0.1:8000",
+        changeOrigin: true,
+      },
+      "/media": {
+        target: process.env.VITE_API_PROXY_TARGET ?? "http://127.0.0.1:8000",
+        changeOrigin: true,
+      },
+    },
+  },
+});
