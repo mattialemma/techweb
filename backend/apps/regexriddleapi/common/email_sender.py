@@ -41,7 +41,12 @@ class EmailSender:
         if not template_id:
             raise RuntimeError("BREVO_OTP_TEMPLATE_ID is required when EMAIL_PROVIDER=brevo")
 
-        message = EmailMessage(subject="", body="", from_email=settings.DEFAULT_FROM_EMAIL, to=[email])
+        message = EmailMessage(
+            subject=None,
+            body="",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[email],
+        )
         message.template_id = int(template_id)
         message.merge_global_data = merge_data
 

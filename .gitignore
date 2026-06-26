@@ -24,6 +24,7 @@ htmlcov/
 # Django
 backend/staticfiles/
 backend/media/
+media/
 backend/db.sqlite3
 
 # Node

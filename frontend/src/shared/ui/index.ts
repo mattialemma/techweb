@@ -5,4 +5,7 @@ export * from "./FileInput";
 export * from "./FormField";
 export * from "./InlineMessage";
 export * from "./Input";
+export * from "./PageHeader";
+export * from "./Panel";
+export * from "./PasswordInput";
 export * from "./Textarea";

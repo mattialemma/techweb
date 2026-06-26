@@ -2,6 +2,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 
+const allowLanHosts = process.env.VITE_ALLOW_LAN_HOSTS === "true";
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -17,7 +19,7 @@ export default defineConfig({
     host: true,
     port: 5173,
     strictPort: true,
-    allowedHosts: ["frontend", "localhost", "127.0.0.1"],
+    allowedHosts: allowLanHosts ? true : ["frontend", "localhost", "127.0.0.1"],
     watch: {
       usePolling: true,
     },

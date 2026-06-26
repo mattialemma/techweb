@@ -1,3 +1,5 @@
+import { Panel } from "@shared/ui";
+
 const steps = [
   {
     title: "Crea una regex segreta",
@@ -28,11 +30,11 @@ export function HowToPlayPage() {
       </h1>
       <div className="mt-10 grid gap-4 md:grid-cols-2">
         {steps.map((step, index) => (
-          <article key={step.title} className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
+          <Panel key={step.title} as="article">
             <span className="text-sm font-bold text-emerald-300">0{index + 1}</span>
             <h2 className="mt-3 text-xl font-bold">{step.title}</h2>
             <p className="mt-3 leading-7 text-slate-300">{step.text}</p>
-          </article>
+          </Panel>
         ))}
       </div>
     </main>

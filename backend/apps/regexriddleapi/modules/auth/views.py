@@ -64,7 +64,7 @@ class LoginView(APIView):
 
         if auth_user is None or not auth_user.is_active:
             return Response(
-                {"detail": "Invalid credentials"},
+                {"detail": "Credenziali non valide."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 

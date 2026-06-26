@@ -2,19 +2,9 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth, validateRegister, type RegisterPayload, type ValidationErrors } from "@features/auth";
+import { parseApiFieldErrors } from "@shared/api";
 import { VALIDATION_LIMITS } from "@shared/lib/validation";
-import { AuthCard, Button, FormField, InlineMessage, Input } from "@shared/ui";
-
-function fieldErrorsFromApi(error: unknown): ValidationErrors {
-  if (typeof error !== "object" || error === null || !("response" in error)) {
-    return {};
-  }
-  const response = (error as { response?: { data?: Record<string, string[] | string> } }).response;
-  const data = response?.data ?? {};
-  return Object.fromEntries(
-    Object.entries(data).map(([key, value]) => [key, Array.isArray(value) ? value[0] : value]),
-  );
-}
+import { AuthCard, Button, FormField, InlineMessage, Input, PasswordInput } from "@shared/ui";
 
 export function RegisterPage() {
   const { register } = useAuth();
@@ -46,7 +36,7 @@ export function RegisterPage() {
       });
       navigate("/challenges", { replace: true });
     } catch (error) {
-      const apiErrors = fieldErrorsFromApi(error);
+      const apiErrors = parseApiFieldErrors<ValidationErrors>(error);
       setErrors(apiErrors);
       setSubmitError(Object.keys(apiErrors).length ? "" : "Registrazione non riuscita.");
     } finally {
@@ -94,9 +84,8 @@ export function RegisterPage() {
           </FormField>
         </div>
         <FormField label="Password" error={errors.password}>
-          <Input
+          <PasswordInput
             autoComplete="new-password"
-            type="password"
             maxLength={VALIDATION_LIMITS.password}
             value={values.password}
             onChange={(event) => setValues({ ...values, password: event.target.value })}

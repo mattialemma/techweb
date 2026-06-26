@@ -18,12 +18,12 @@ def user_avatar_url(user, request=None) -> str | None:
     if not avatar:
         return None
     try:
-        url = avatar.url
+        if not avatar.storage.exists(avatar.name):
+            return None
+        # Keep media URLs same-origin so Vite/nginx proxies do not leak Docker hostnames.
+        return avatar.url
     except ValueError:
         return None
-    if request is not None:
-        return request.build_absolute_uri(url)
-    return url
 
 
 class UserReadSerializer(serializers.ModelSerializer):

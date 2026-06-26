@@ -103,6 +103,7 @@ class AuthUsersApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data["detail"], "Credenziali non valide.")
 
     def test_refresh_access_token_uses_cookie(self):
         _, login_response = self.authenticate()
@@ -161,7 +162,18 @@ class AuthUsersApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsNotNone(response.data["avatarUrl"])
-        self.assertIn("/media/avatars/", response.data["avatarUrl"])
+        self.assertTrue(response.data["avatarUrl"].startswith("/media/avatars/"))
+        self.assertNotIn("backend:8000", response.data["avatarUrl"])
+
+    def test_current_user_hides_missing_avatar_file(self):
+        user, _ = self.authenticate()
+        user.profile.avatar.name = "avatars/missing-avatar.png"
+        user.profile.save(update_fields=["avatar", "updated_at"])
+
+        response = self.client.get("/api/users/me")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data["avatarUrl"])
 
     def test_upload_avatar_rejects_non_image(self):
         self.authenticate()

@@ -7,8 +7,9 @@ import {
   type ChallengeValidationErrors,
   type CreateChallengePayload,
 } from "@features/challenges";
+import { parseApiFieldErrors } from "@shared/api";
 import { VALIDATION_LIMITS } from "@shared/lib/validation";
-import { Button, FormField, InlineMessage, Input, Textarea } from "@shared/ui";
+import { Button, FormField, InlineMessage, Input, PageHeader, Panel, Textarea } from "@shared/ui";
 
 const emptyChallenge: CreateChallengePayload = {
   title: "",
@@ -19,15 +20,6 @@ const emptyChallenge: CreateChallengePayload = {
   positiveControls: [""],
   negativeControls: [""],
 };
-
-function apiErrors(error: unknown): ChallengeValidationErrors {
-  if (typeof error !== "object" || error === null || !("response" in error)) return {};
-  const response = (error as { response?: { data?: Record<string, string[] | string> } }).response;
-  const data = response?.data ?? {};
-  return Object.fromEntries(
-    Object.entries(data).map(([key, value]) => [key, Array.isArray(value) ? value[0] : value]),
-  ) as ChallengeValidationErrors;
-}
 
 function updateControl(values: string[], index: number, nextValue: string): string[] {
   return values.map((value, currentIndex) => (currentIndex === index ? nextValue : value));
@@ -62,7 +54,7 @@ export function CreateChallengePage() {
       await createChallenge.mutateAsync(payload);
       navigate("/challenges", { replace: true });
     } catch (error) {
-      const parsedErrors = apiErrors(error);
+      const parsedErrors = parseApiFieldErrors<ChallengeValidationErrors>(error);
       setErrors(parsedErrors);
       setSubmitError(
         Object.keys(parsedErrors).length
@@ -126,20 +118,16 @@ export function CreateChallengePage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6">
-      <div className="mb-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-300">
-          Nuova sfida
-        </p>
-        <h1 className="mt-3 text-3xl font-black sm:text-4xl">Crea un regex riddle</h1>
-        <p className="mt-3 max-w-2xl leading-7 text-slate-300">
-          Gli esempi saranno pubblici; regex e controlli resteranno segreti nel backend.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Nuova sfida"
+        title="Crea un regex riddle"
+        description="Gli esempi saranno pubblici; regex e controlli resteranno segreti nel backend."
+      />
 
       <form className="space-y-5" onSubmit={handleSubmit}>
         {submitError ? <InlineMessage tone="error">{submitError}</InlineMessage> : null}
 
-        <section className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
+        <Panel>
           <div className="space-y-4">
             <FormField label="Titolo" error={errors.title}>
               <Input
@@ -180,7 +168,7 @@ export function CreateChallengePage() {
               </FormField>
             </div>
           </div>
-        </section>
+        </Panel>
 
         <div className="grid gap-5 lg:grid-cols-2">
           {renderControls("positiveControls")}

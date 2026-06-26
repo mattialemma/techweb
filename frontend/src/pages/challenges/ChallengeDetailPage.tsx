@@ -9,8 +9,9 @@ import {
   validateProposedRegex,
   type Attempt,
 } from "@features/challenges";
+import { parseApiMessage } from "@shared/api";
 import { VALIDATION_LIMITS } from "@shared/lib/validation";
-import { Avatar, Button, FormField, InlineMessage, Input } from "@shared/ui";
+import { Avatar, Button, FormField, InlineMessage, Input, Panel } from "@shared/ui";
 
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat("it-IT", {
@@ -24,18 +25,6 @@ function formatDate(value: string): string {
 
 function attemptSummary(attempt: Attempt) {
   return `${attempt.positiveMatched}/${attempt.totalPositive} positivi, ${attempt.negativeMatched}/${attempt.totalNegative} negativi`;
-}
-
-function apiErrorMessage(error: unknown): string {
-  if (typeof error !== "object" || error === null || !("response" in error)) {
-    return "Tentativo non riuscito.";
-  }
-  const response = (error as { response?: { data?: Record<string, string[] | string> } }).response;
-  const data = response?.data ?? {};
-  if (typeof data.detail === "string") return data.detail;
-  if (Array.isArray(data.proposedRegex)) return data.proposedRegex[0] ?? "Regex non valida.";
-  if (typeof data.proposedRegex === "string") return data.proposedRegex;
-  return "Tentativo non riuscito.";
 }
 
 export function ChallengeDetailPage() {
@@ -72,7 +61,7 @@ export function ChallengeDetailPage() {
       setLastAttempt(attempt);
       setProposedRegex("");
     } catch (error) {
-      setSubmitError(apiErrorMessage(error));
+      setSubmitError(parseApiMessage(error, ["detail", "proposedRegex"], "Tentativo non riuscito."));
     }
   }
 
@@ -112,7 +101,7 @@ export function ChallengeDetailPage() {
       </div>
 
       <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <section className="min-w-0 rounded-lg border border-white/10 bg-white/[0.04] p-5 sm:p-6">
+        <Panel padding="lg">
           <div className="flex items-center gap-3">
             <Avatar src={challenge.author.avatarUrl} name={challenge.author.username} size="sm" />
             <div className="min-w-0">
@@ -146,10 +135,10 @@ export function ChallengeDetailPage() {
               </p>
             </div>
           </div>
-        </section>
+        </Panel>
 
         <aside className="min-w-0 space-y-5">
-          <section className="min-w-0 rounded-lg border border-white/10 bg-white/[0.04] p-5">
+          <Panel>
             <h2 className="text-xl font-bold">Prova a risolvere</h2>
             {isAuthor ? (
               <InlineMessage tone="info">
@@ -180,9 +169,9 @@ export function ChallengeDetailPage() {
                 </Button>
               </form>
             )}
-          </section>
+          </Panel>
 
-          <section className="min-w-0 rounded-lg border border-white/10 bg-white/[0.04] p-5">
+          <Panel>
             <h2 className="text-xl font-bold">I tuoi tentativi</h2>
             {attemptsLoading ? <p className="mt-3 text-sm text-slate-400">Caricamento...</p> : null}
             {!attemptsLoading && attempts.length === 0 ? (
@@ -213,7 +202,7 @@ export function ChallengeDetailPage() {
                 </article>
               ))}
             </div>
-          </section>
+          </Panel>
         </aside>
       </div>
     </main>

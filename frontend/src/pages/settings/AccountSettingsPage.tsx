@@ -14,17 +14,19 @@ import {
   useUpdateCurrentUser,
   useUploadCurrentUserAvatar,
 } from "@features/user";
+import { parseApiFieldErrors } from "@shared/api";
 import { VALIDATION_LIMITS } from "@shared/lib/validation";
-import { Avatar, Button, FileInput, FormField, InlineMessage, Input } from "@shared/ui";
-
-function apiFieldErrors(error: unknown): ValidationErrors {
-  if (typeof error !== "object" || error === null || !("response" in error)) return {};
-  const response = (error as { response?: { data?: Record<string, string[] | string> } }).response;
-  const data = response?.data ?? {};
-  return Object.fromEntries(
-    Object.entries(data).map(([key, value]) => [key, Array.isArray(value) ? value[0] : value]),
-  );
-}
+import {
+  Avatar,
+  Button,
+  FileInput,
+  FormField,
+  InlineMessage,
+  Input,
+  PageHeader,
+  Panel,
+  PasswordInput,
+} from "@shared/ui";
 
 export function AccountSettingsPage() {
   const { user } = useAuth();
@@ -59,7 +61,7 @@ export function AccountSettingsPage() {
       await updateUser.mutateAsync(values);
       setMessage("Profilo aggiornato.");
     } catch (error) {
-      setErrors(apiFieldErrors(error));
+      setErrors(parseApiFieldErrors<ValidationErrors>(error));
       setMessage("Aggiornamento non riuscito.");
     }
   }
@@ -104,7 +106,7 @@ export function AccountSettingsPage() {
       setPasswordValues({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setPasswordMessage("Password aggiornata.");
     } catch (error) {
-      setPasswordErrors(apiFieldErrors(error));
+      setPasswordErrors(parseApiFieldErrors<ValidationErrors>(error));
       setPasswordMessage("Cambio password non riuscito.");
     } finally {
       setIsChangingPassword(false);
@@ -113,15 +115,10 @@ export function AccountSettingsPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
-      <div className="mb-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-300">
-          Account
-        </p>
-        <h1 className="mt-3 text-3xl font-black sm:text-4xl">Impostazioni profilo</h1>
-      </div>
+      <PageHeader eyebrow="Account" title="Impostazioni profilo" />
 
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-        <aside className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
+        <Panel as="aside">
           <Avatar src={user?.avatarUrl} name={user?.username} size="lg" />
           <h2 className="mt-4 text-xl font-bold">{user?.username}</h2>
           <p className="mt-1 break-all text-sm text-slate-400">{user?.email}</p>
@@ -140,10 +137,10 @@ export function AccountSettingsPage() {
               Rimuovi avatar
             </Button>
           </div>
-        </aside>
+        </Panel>
 
         <div className="space-y-6">
-          <section className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
+          <Panel>
             <form className="space-y-4" onSubmit={handleSubmit}>
               {message ? (
                 <InlineMessage tone={message.includes("non") ? "error" : "success"}>{message}</InlineMessage>
@@ -183,9 +180,9 @@ export function AccountSettingsPage() {
                 Salva modifiche
               </Button>
             </form>
-          </section>
+          </Panel>
 
-          <section className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
+          <Panel>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h2 className="text-xl font-bold">Cambia password</h2>
@@ -207,9 +204,8 @@ export function AccountSettingsPage() {
                 </InlineMessage>
               ) : null}
               <FormField label="Password attuale" error={passwordErrors.currentPassword}>
-                <Input
+                <PasswordInput
                   autoComplete="current-password"
-                  type="password"
                   maxLength={VALIDATION_LIMITS.password}
                   value={passwordValues.currentPassword}
                   onChange={(event) =>
@@ -219,9 +215,8 @@ export function AccountSettingsPage() {
               </FormField>
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField label="Nuova password" error={passwordErrors.newPassword}>
-                  <Input
+                  <PasswordInput
                     autoComplete="new-password"
-                    type="password"
                     maxLength={VALIDATION_LIMITS.password}
                     value={passwordValues.newPassword}
                     onChange={(event) =>
@@ -230,9 +225,8 @@ export function AccountSettingsPage() {
                   />
                 </FormField>
                 <FormField label="Conferma nuova password" error={passwordErrors.confirmPassword}>
-                  <Input
+                  <PasswordInput
                     autoComplete="new-password"
-                    type="password"
                     maxLength={VALIDATION_LIMITS.password}
                     value={passwordValues.confirmPassword}
                     onChange={(event) =>
@@ -245,7 +239,7 @@ export function AccountSettingsPage() {
                 Aggiorna password
               </Button>
             </form>
-          </section>
+          </Panel>
         </div>
       </div>
     </main>

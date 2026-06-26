@@ -11,8 +11,10 @@ const privateLinks = [
 ];
 
 function navClass({ isActive }: { isActive: boolean }) {
-  return `rounded-md px-3 py-2 text-sm font-medium transition ${
-    isActive ? "bg-white/10 text-white" : "text-slate-300 hover:bg-white/10 hover:text-white"
+  return `rounded-md px-3 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-300/25 ${
+    isActive
+      ? "bg-emerald-300/[0.12] text-emerald-100 shadow-inner shadow-emerald-950/20"
+      : "text-slate-300 hover:bg-white/10 hover:text-white"
   }`;
 }
 
@@ -26,12 +28,17 @@ export function PageShell() {
   }
 
   return (
-    <div className="min-h-screen bg-[#111318] text-white">
-      <header className="sticky top-0 z-20 border-b border-white/10 bg-[#111318]/95 backdrop-blur">
+    <div className="min-h-screen text-white">
+      <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/78 shadow-lg shadow-black/15 backdrop-blur-xl">
         <nav className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center justify-between gap-3">
-            <Link to="/" className="text-lg font-black tracking-wide text-white">
-              REGEX<span className="text-emerald-300">RIDDLE</span>
+            <Link to="/" className="flex items-center gap-3 text-lg font-black tracking-wide text-white">
+              <span className="grid h-9 w-9 place-items-center rounded-md border border-emerald-300/25 bg-emerald-300/10 font-mono text-sm text-emerald-200 shadow-lg shadow-emerald-950/20">
+                .*
+              </span>
+              <span>
+                REGEX<span className="text-emerald-300">RIDDLE</span>
+              </span>
             </Link>
             {user ? (
               <div className="lg:hidden">

@@ -4,16 +4,26 @@
 
 :root {
   color: #f7f7f2;
-  background: #111318;
+  background: #0c1016;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "IBM Plex Sans", Aptos, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background:
+    linear-gradient(rgba(18, 26, 36, 0.76) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18, 26, 36, 0.76) 1px, transparent 1px),
+    linear-gradient(135deg, #0b0f15 0%, #101720 45%, #0d1412 100%);
+  background-size:
+    44px 44px,
+    44px 44px,
+    auto;
 }
 
 html,
@@ -25,6 +35,11 @@ body,
 
 * {
   box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(52, 211, 153, 0.28);
+  color: #f8fafc;
 }
 
 a {

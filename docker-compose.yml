@@ -34,8 +34,10 @@ services:
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
       DEBUG: ${DEBUG}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+      MEDIA_ROOT: /app/media
     volumes:
       - ./backend:/app
+      - ./media:/app/media
     ports:
       - "8000:8000"
     command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
@@ -59,6 +61,7 @@ services:
     environment:
       VITE_API_BASE_URL: ${VITE_API_BASE_URL}
       VITE_API_PROXY_TARGET: ${VITE_API_PROXY_TARGET}
+      VITE_ALLOW_LAN_HOSTS: ${VITE_ALLOW_LAN_HOSTS}
     volumes:
       - ./frontend:/app
       - /app/node_modules

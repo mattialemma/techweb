@@ -76,12 +76,13 @@ class PasswordResetService:
                 user=user,
                 code=code,
                 lock=True,
-                consume_on_match=True,
             )
             if not valid or otp is None:
                 return False
 
             self._validate_new_password(user=user, new_password=new_password)
+            if not self._consume_otp(otp=otp):
+                return False
             user.set_password(new_password)
             user.save(update_fields=["password"])
 

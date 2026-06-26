@@ -3,15 +3,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth, validateLogin, type ValidationErrors } from "@features/auth";
 import { VALIDATION_LIMITS } from "@shared/lib/validation";
-import { AuthCard, Button, FormField, InlineMessage, Input } from "@shared/ui";
+import { AuthCard, Button, FormField, Input, PasswordInput } from "@shared/ui";
 
-function apiErrorMessage(error: unknown): string {
-  if (typeof error === "object" && error !== null && "response" in error) {
-    const response = (error as { response?: { data?: { detail?: string } } }).response;
-    if (response?.data?.detail) return response.data.detail;
-  }
-  return "Accesso non riuscito. Controlla le credenziali.";
-}
+const INVALID_CREDENTIALS_MESSAGE = "Email o password non corretti.";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -34,8 +28,8 @@ export function LoginPage() {
       await login(values);
       const from = (location.state as { from?: string } | null)?.from ?? "/challenges";
       navigate(from, { replace: true });
-    } catch (error) {
-      setSubmitError(apiErrorMessage(error));
+    } catch {
+      setSubmitError(INVALID_CREDENTIALS_MESSAGE);
     } finally {
       setIsSubmitting(false);
     }
@@ -44,25 +38,34 @@ export function LoginPage() {
   return (
     <AuthCard title="Bentornato" subtitle="Accedi per creare sfide e risolvere regex riddle.">
       <form className="space-y-4" onSubmit={handleSubmit}>
-        {submitError ? <InlineMessage tone="error">{submitError}</InlineMessage> : null}
         <FormField label="Email" error={errors.email}>
           <Input
             autoComplete="email"
             inputMode="email"
             maxLength={VALIDATION_LIMITS.email}
             value={values.email}
-            onChange={(event) => setValues({ ...values, email: event.target.value })}
+            onChange={(event) => {
+              setSubmitError("");
+              setValues({ ...values, email: event.target.value });
+            }}
           />
         </FormField>
         <FormField label="Password" error={errors.password}>
-          <Input
+          <PasswordInput
             autoComplete="current-password"
-            type="password"
             maxLength={VALIDATION_LIMITS.password}
             value={values.password}
-            onChange={(event) => setValues({ ...values, password: event.target.value })}
+            onChange={(event) => {
+              setSubmitError("");
+              setValues({ ...values, password: event.target.value });
+            }}
           />
         </FormField>
+        {submitError ? (
+          <p aria-live="polite" className="-mt-2 text-sm text-red-300">
+            {submitError}
+          </p>
+        ) : null}
         <div className="text-right">
           <Link
             className="text-sm font-semibold text-emerald-300 hover:text-emerald-200"

@@ -8,16 +8,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { resetPasswordWithOtp, verifyPasswordOtp } from "@features/auth/api";
 import { validatePasswordReset, type ValidationErrors } from "@features/auth";
+import { parseApiMessage } from "@shared/api";
 import { VALIDATION_LIMITS } from "@shared/lib/validation";
-import { AuthCard, Button, FormField, InlineMessage, Input } from "@shared/ui";
-
-function apiErrorMessage(error: unknown): string {
-  if (typeof error === "object" && error !== null && "response" in error) {
-    const response = (error as { response?: { data?: { detail?: string } } }).response;
-    if (response?.data?.detail) return response.data.detail;
-  }
-  return "Password non aggiornata. Controlla codice e nuova password.";
-}
+import { AuthCard, Button, FormField, InlineMessage, Input, PasswordInput } from "@shared/ui";
 
 export function ResetPasswordPage() {
   const location = useLocation();
@@ -53,7 +46,9 @@ export function ResetPasswordPage() {
       setMessage("Password aggiornata. Torno al login...");
       setTimeout(() => navigate("/login", { replace: true }), 900);
     } catch (error) {
-      setMessage(apiErrorMessage(error));
+      setMessage(
+        parseApiMessage(error, ["detail"], "Password non aggiornata. Controlla codice e nuova password."),
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -84,18 +79,16 @@ export function ResetPasswordPage() {
           />
         </FormField>
         <FormField label="Nuova password" error={errors.newPassword}>
-          <Input
+          <PasswordInput
             autoComplete="new-password"
-            type="password"
             maxLength={VALIDATION_LIMITS.password}
             value={values.newPassword}
             onChange={(event) => setValues({ ...values, newPassword: event.target.value })}
           />
         </FormField>
         <FormField label="Conferma nuova password" error={errors.confirmPassword}>
-          <Input
+          <PasswordInput
             autoComplete="new-password"
-            type="password"
             maxLength={VALIDATION_LIMITS.password}
             value={values.confirmPassword}
             onChange={(event) => setValues({ ...values, confirmPassword: event.target.value })}

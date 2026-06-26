@@ -8,8 +8,8 @@ type AuthCardProps = {
 
 export function AuthCard({ title, subtitle, children }: AuthCardProps) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#111318] px-4 py-12 text-white">
-      <section className="w-full max-w-md rounded-lg border border-white/10 bg-white/[0.04] p-6 shadow-2xl shadow-black/20 sm:p-8">
+    <main className="flex min-h-screen items-center justify-center px-4 py-12 text-white">
+      <section className="w-full max-w-md rounded-lg border border-white/10 bg-slate-950/55 p-6 shadow-2xl shadow-black/30 backdrop-blur sm:p-8">
         <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-300">
           REGEXRIDDLE
         </p>
