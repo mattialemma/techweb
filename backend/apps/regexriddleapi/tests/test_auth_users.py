@@ -66,6 +66,17 @@ class AuthUsersApiTests(APITestCase):
         user = User.objects.get(email="mattia@example.com")
         self.assertTrue(UserProfile.objects.filter(user=user).exists())
 
+    def test_register_requires_first_and_last_name(self):
+        response = self.client.post(
+            "/api/users",
+            self.register_payload(firstName="", lastName=""),
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("firstName", response.data)
+        self.assertIn("lastName", response.data)
+
     def test_register_rejects_duplicate_email_case_insensitive(self):
         self.create_user(email="mattia@example.com")
 
@@ -150,6 +161,19 @@ class AuthUsersApiTests(APITestCase):
         self.assertEqual(user.username, "lemma")
         self.assertEqual(user.email, "lemma@example.com")
         self.assertEqual(response.data["firstName"], "Lemma")
+
+    def test_update_current_user_rejects_blank_names(self):
+        self.authenticate()
+
+        response = self.client.patch(
+            "/api/users/me",
+            {"firstName": "", "lastName": ""},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("firstName", response.data)
+        self.assertIn("lastName", response.data)
 
     def test_upload_avatar_accepts_image(self):
         self.authenticate()

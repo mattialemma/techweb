@@ -140,6 +140,8 @@ class LeaderboardEntrySerializer(serializers.Serializer):
     rank = serializers.IntegerField()
     userId = serializers.IntegerField()
     username = serializers.CharField()
+    firstName = serializers.CharField()
+    lastName = serializers.CharField()
     avatarUrl = serializers.CharField(allow_null=True)
     solvedCount = serializers.IntegerField()
     averageAttempts = serializers.FloatField()

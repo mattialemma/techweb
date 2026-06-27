@@ -33,6 +33,8 @@ export function RegisterPage() {
         ...values,
         username: values.username.trim(),
         email: values.email.trim(),
+        firstName: values.firstName.trim(),
+        lastName: values.lastName.trim(),
       });
       navigate("/challenges", { replace: true });
     } catch (error) {

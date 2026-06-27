@@ -46,6 +46,8 @@ export type LeaderboardEntry = {
   rank: number;
   userId: number;
   username: string;
+  firstName: string;
+  lastName: string;
   avatarUrl: string | null;
   solvedCount: number;
   averageAttempts: number;

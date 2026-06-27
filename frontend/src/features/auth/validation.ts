@@ -2,6 +2,7 @@ import type { RegisterPayload } from "./types";
 import {
   VALIDATION_LIMITS,
   maxLength,
+  required,
   validateEmailFormat,
   validatePasswordComplexity,
 } from "@shared/lib/validation";
@@ -82,10 +83,12 @@ export function validateRegister(values: RegisterPayload): ValidationErrors {
   }
   if (emailError) errors.email = emailError;
   if (passwordError) errors.password = passwordError;
+  const firstNameRequired = required(values.firstName, "Nome");
+  const lastNameRequired = required(values.lastName, "Cognome");
   const firstNameError = maxLength(values.firstName ?? "", VALIDATION_LIMITS.name);
   const lastNameError = maxLength(values.lastName ?? "", VALIDATION_LIMITS.name);
-  if (firstNameError) errors.firstName = firstNameError;
-  if (lastNameError) errors.lastName = lastNameError;
+  if (firstNameRequired || firstNameError) errors.firstName = firstNameRequired ?? firstNameError ?? "";
+  if (lastNameRequired || lastNameError) errors.lastName = lastNameRequired ?? lastNameError ?? "";
 
   return errors;
 }
@@ -104,10 +107,12 @@ export function validateProfile(values: {
     errors.username = `Massimo ${VALIDATION_LIMITS.username} caratteri.`;
   }
   if (emailError) errors.email = emailError;
+  const firstNameRequired = required(values.firstName, "Nome");
+  const lastNameRequired = required(values.lastName, "Cognome");
   const firstNameError = maxLength(values.firstName, VALIDATION_LIMITS.name);
   const lastNameError = maxLength(values.lastName, VALIDATION_LIMITS.name);
-  if (firstNameError) errors.firstName = firstNameError;
-  if (lastNameError) errors.lastName = lastNameError;
+  if (firstNameRequired || firstNameError) errors.firstName = firstNameRequired ?? firstNameError ?? "";
+  if (lastNameRequired || lastNameError) errors.lastName = lastNameRequired ?? lastNameError ?? "";
 
   return errors;
 }

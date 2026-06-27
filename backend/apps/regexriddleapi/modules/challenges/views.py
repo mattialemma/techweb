@@ -134,6 +134,8 @@ class LeaderboardView(APIView):
                 "rank": index + 1,
                 "userId": entry["user"].id,
                 "username": entry["user"].username,
+                "firstName": entry["user"].first_name,
+                "lastName": entry["user"].last_name,
                 "avatarUrl": user_avatar_url(entry["user"], request),
                 "solvedCount": entry["solvedCount"],
                 "averageAttempts": entry["averageAttempts"],

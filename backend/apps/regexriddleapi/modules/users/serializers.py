@@ -59,8 +59,8 @@ class RegisterUserSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=USERNAME_MAX_LENGTH)
     email = serializers.EmailField(max_length=EMAIL_MAX_LENGTH)
     password = serializers.CharField(write_only=True, min_length=8, max_length=PASSWORD_MAX_LENGTH)
-    firstName = serializers.CharField(required=False, allow_blank=True, max_length=NAME_MAX_LENGTH)
-    lastName = serializers.CharField(required=False, allow_blank=True, max_length=NAME_MAX_LENGTH)
+    firstName = serializers.CharField(max_length=NAME_MAX_LENGTH)
+    lastName = serializers.CharField(max_length=NAME_MAX_LENGTH)
 
     def validate_username(self, value: str) -> str:
         username = value.strip()
@@ -81,13 +81,25 @@ class RegisterUserSerializer(serializers.Serializer):
         validate_password(value)
         return value
 
+    def validate_firstName(self, value: str) -> str:
+        first_name = value.strip()
+        if not first_name:
+            raise serializers.ValidationError("Nome obbligatorio.")
+        return first_name
+
+    def validate_lastName(self, value: str) -> str:
+        last_name = value.strip()
+        if not last_name:
+            raise serializers.ValidationError("Cognome obbligatorio.")
+        return last_name
+
     def create(self, validated_data):
         user = User.objects.create_user(
             username=validated_data["username"],
             email=validated_data["email"],
             password=validated_data["password"],
-            first_name=validated_data.get("firstName", ""),
-            last_name=validated_data.get("lastName", ""),
+            first_name=validated_data["firstName"],
+            last_name=validated_data["lastName"],
         )
         return user
 
@@ -95,8 +107,8 @@ class RegisterUserSerializer(serializers.Serializer):
 class UpdateCurrentUserSerializer(serializers.Serializer):
     username = serializers.CharField(required=False, max_length=USERNAME_MAX_LENGTH)
     email = serializers.EmailField(required=False, max_length=EMAIL_MAX_LENGTH)
-    firstName = serializers.CharField(required=False, allow_blank=True, max_length=NAME_MAX_LENGTH)
-    lastName = serializers.CharField(required=False, allow_blank=True, max_length=NAME_MAX_LENGTH)
+    firstName = serializers.CharField(required=False, max_length=NAME_MAX_LENGTH)
+    lastName = serializers.CharField(required=False, max_length=NAME_MAX_LENGTH)
 
     def validate_username(self, value: str) -> str:
         username = value.strip()
@@ -113,6 +125,18 @@ class UpdateCurrentUserSerializer(serializers.Serializer):
         if email_exists(email, excluding_user=user):
             raise serializers.ValidationError("Email already exists.")
         return email
+
+    def validate_firstName(self, value: str) -> str:
+        first_name = value.strip()
+        if not first_name:
+            raise serializers.ValidationError("Nome obbligatorio.")
+        return first_name
+
+    def validate_lastName(self, value: str) -> str:
+        last_name = value.strip()
+        if not last_name:
+            raise serializers.ValidationError("Cognome obbligatorio.")
+        return last_name
 
     def update(self, instance, validated_data):
         for input_name, model_name in (
