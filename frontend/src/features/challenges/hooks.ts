@@ -1,73 +1,82 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
-  createAttempt,
-  createChallenge,
-  getChallenge,
-  getLeaderboard,
-  listChallenges,
-  listMyAttempts,
+  fetchPersonalAttemptLog,
+  fetchPuzzle,
+  fetchPuzzleCatalog,
+  fetchSolverBoard,
+  publishPuzzle,
+  submitPuzzleAttempt,
 } from "./api";
-import type { ChallengeOrdering } from "./types";
+import type { PuzzleOrdering } from "./types";
 
-export const challengesQueryKey = (page: number, ordering: ChallengeOrdering) =>
-  ["challenges", page, ordering] as const;
-export const challengeQueryKey = (challengeId: string) => ["challenges", challengeId] as const;
-export const challengeAttemptsQueryKey = (challengeId: string) =>
-  ["challenges", challengeId, "attempts", "me"] as const;
-export const leaderboardQueryKey = (page: number) => ["leaderboard", page] as const;
-
-export function useChallenges(page = 1, ordering: ChallengeOrdering = "newest") {
+export function usePuzzleCatalog(page = 1, ordering: PuzzleOrdering = "newest") {
   return useQuery({
-    queryKey: challengesQueryKey(page, ordering),
-    queryFn: () => listChallenges(page, ordering),
+    queryKey: puzzleCatalogKey(page, ordering),
+    queryFn: () => fetchPuzzleCatalog(page, ordering),
   });
 }
 
-export function useCreateChallenge() {
+export function usePublishPuzzle() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: createChallenge,
+    mutationFn: publishPuzzle,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["challenges"] });
+      queryClient.invalidateQueries({ queryKey: ["puzzles"] });
     },
   });
 }
 
-export function useChallenge(challengeId: string) {
+export function usePuzzle(challengeId: string) {
   return useQuery({
-    queryKey: challengeQueryKey(challengeId),
-    queryFn: () => getChallenge(challengeId),
+    queryKey: puzzleDetailKey(challengeId),
+    queryFn: () => fetchPuzzle(challengeId),
     enabled: challengeId.length > 0,
   });
 }
 
-export function useMyChallengeAttempts(challengeId: string) {
+export function usePersonalAttemptLog(challengeId: string) {
   return useQuery({
-    queryKey: challengeAttemptsQueryKey(challengeId),
-    queryFn: () => listMyAttempts(challengeId),
+    queryKey: personalAttemptLogKey(challengeId),
+    queryFn: () => fetchPersonalAttemptLog(challengeId),
     enabled: challengeId.length > 0,
   });
 }
 
-export function useCreateAttempt() {
+export function useSubmitPuzzleAttempt() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: createAttempt,
+    mutationFn: submitPuzzleAttempt,
     onSuccess: (attempt) => {
       queryClient.invalidateQueries({
-        queryKey: challengeAttemptsQueryKey(String(attempt.challengeId)),
+        queryKey: personalAttemptLogKey(String(attempt.challengeId)),
       });
       if (attempt.solved) {
-        queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+        queryClient.invalidateQueries({ queryKey: ["solver-board"] });
       }
     },
   });
 }
 
-export function useLeaderboard(page = 1) {
+export function useSolverBoard(page = 1) {
   return useQuery({
-    queryKey: leaderboardQueryKey(page),
-    queryFn: () => getLeaderboard(page),
+    queryKey: solverBoardKey(page),
+    queryFn: () => fetchSolverBoard(page),
   });
+}
+
+export function puzzleCatalogKey(page: number, ordering: PuzzleOrdering) {
+  return ["puzzles", page, ordering] as const;
+}
+
+export function puzzleDetailKey(challengeId: string) {
+  return ["puzzles", challengeId] as const;
+}
+
+export function personalAttemptLogKey(challengeId: string) {
+  return ["challenges", challengeId, "attempts", "me"] as const;
+}
+
+export function solverBoardKey(page: number) {
+  return ["solver-board", page] as const;
 }

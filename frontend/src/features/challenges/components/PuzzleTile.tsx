@@ -1,4 +1,4 @@
-// FILE: ChallengeCard.tsx
+// FILE: PuzzleTile.tsx
 // Purpose: Renders the reusable challenge preview card used in challenge lists.
 // Layer: Feature UI component
 // Depends on: Challenge type, React Router Link, shared Avatar.
@@ -9,13 +9,13 @@ import { Avatar } from "@shared/ui";
 
 import type { Challenge } from "../types";
 
-import { ChallengeExampleToken } from "./ChallengeExampleToken";
+import { PuzzleSampleBadge } from "./PuzzleSampleBadge";
 
-type ChallengeCardProps = {
+type PuzzleTileProps = {
   challenge: Challenge;
 };
 
-export function ChallengeCard({ challenge }: ChallengeCardProps) {
+export function PuzzleTile({ challenge }: PuzzleTileProps) {
   return (
     <Link
       aria-label={`Apri sfida ${challenge.title}`}
@@ -42,8 +42,8 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
         )}
       </div>
       <div className="mt-5 grid gap-2">
-        <ChallengeExampleToken label="passa" tone="positive" value={challenge.positiveExample} />
-        <ChallengeExampleToken label="stop" tone="negative" value={challenge.negativeExample} />
+        <PuzzleSampleBadge label="passa" tone="positive" value={challenge.positiveExample} />
+        <PuzzleSampleBadge label="stop" tone="negative" value={challenge.negativeExample} />
       </div>
     </Link>
   );

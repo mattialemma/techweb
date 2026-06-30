@@ -12,13 +12,13 @@ import { LeaderboardPage } from "@pages/leaderboard/LeaderboardPage";
 import { HowToPlayPage } from "@pages/public/HowToPlayPage";
 import { LandingPage } from "@pages/public/LandingPage";
 import { AccountSettingsPage } from "@pages/settings/AccountSettingsPage";
-import { PageShell } from "@widgets/PageShell";
+import { ApplicationChrome } from "@widgets/ApplicationChrome";
 
 export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<PageShell />}>
+        <Route element={<ApplicationChrome />}>
           <Route path="/" element={<LandingPage />} />
           <Route path="/how-to-play" element={<HowToPlayPage />} />
           <Route

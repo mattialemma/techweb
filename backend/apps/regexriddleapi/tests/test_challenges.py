@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.regexriddleapi.modules.challenges.models import Attempt, Challenge
-from apps.regexriddleapi.modules.challenges.services import regex_fullmatches
+from apps.regexriddleapi.modules.challenges.scoring import pattern_accepts_value
 
 User = get_user_model()
 
@@ -17,7 +17,7 @@ class SlowRegex:
 class ChallengeServiceTests(APITestCase):
     def test_regex_fullmatch_timeout_returns_validation_error(self):
         with self.assertRaises(serializers.ValidationError) as context:
-            regex_fullmatches(SlowRegex(), "aaaaaaaaaaaaaaaaaaaa")
+            pattern_accepts_value(SlowRegex(), "aaaaaaaaaaaaaaaaaaaa")
 
         self.assertIn("detail", context.exception.detail)
 

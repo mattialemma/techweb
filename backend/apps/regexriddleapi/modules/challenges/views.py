@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ...api.pagination import DefaultPageNumberPagination
-from ..users.serializers import user_avatar_url
+from ..users.serializers import build_avatar_url
 from .models import Attempt, Challenge
 from .serializers import (
     AttemptCreateSerializer,
@@ -19,17 +19,17 @@ from .serializers import (
     ChallengeReadSerializer,
     LeaderboardEntrySerializer,
 )
-from .services import create_attempt_for_challenge
+from .attempts import record_attempt_for_challenge
 
 User = get_user_model()
 
 
-def challenge_ordering_for_request(request) -> list[str]:
+def resolve_challenge_sort_fields(request) -> list[str]:
     ordering = request.query_params.get("ordering", "newest")
     return ["created_at", "id"] if ordering == "oldest" else ["-created_at", "-id"]
 
 
-class ChallengeListCreateView(APIView):
+class PuzzleCollectionEndpoint(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(operation_id="challenges_list", responses=ChallengeReadSerializer(many=True))
@@ -37,7 +37,7 @@ class ChallengeListCreateView(APIView):
         challenges = (
             Challenge.objects.filter(is_published=True)
             .select_related("author", "author__profile")
-            .order_by(*challenge_ordering_for_request(request))
+            .order_by(*resolve_challenge_sort_fields(request))
         )
         paginator = DefaultPageNumberPagination()
         page = paginator.paginate_queryset(challenges, request, view=self)
@@ -61,7 +61,7 @@ class ChallengeListCreateView(APIView):
         return Response(read_serializer.data, status=status.HTTP_201_CREATED)
 
 
-class ChallengeDetailView(APIView):
+class PuzzleDetailEndpoint(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(operation_id="challenges_retrieve", responses=ChallengeReadSerializer)
@@ -75,7 +75,7 @@ class ChallengeDetailView(APIView):
         return Response(serializer.data)
 
 
-class ChallengeAttemptCreateView(APIView):
+class PuzzleAttemptEndpoint(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
@@ -91,7 +91,7 @@ class ChallengeAttemptCreateView(APIView):
         )
         serializer = AttemptCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        attempt = create_attempt_for_challenge(
+        attempt = record_attempt_for_challenge(
             challenge=challenge,
             solver=request.user,
             proposed_regex=serializer.validated_data["proposedRegex"],
@@ -99,7 +99,7 @@ class ChallengeAttemptCreateView(APIView):
         return Response(AttemptReadSerializer(attempt).data, status=status.HTTP_201_CREATED)
 
 
-class CurrentUserChallengeAttemptsView(APIView):
+class MyPuzzleAttemptsEndpoint(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
@@ -114,7 +114,7 @@ class CurrentUserChallengeAttemptsView(APIView):
         return paginator.get_paginated_response(AttemptReadSerializer(page, many=True).data)
 
 
-class LeaderboardView(APIView):
+class SolverRankingEndpoint(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(operation_id="leaderboard_list", responses=LeaderboardEntrySerializer(many=True))
@@ -152,7 +152,7 @@ class LeaderboardView(APIView):
                 "username": user.username,
                 "firstName": user.first_name,
                 "lastName": user.last_name,
-                "avatarUrl": user_avatar_url(user, request),
+                "avatarUrl": build_avatar_url(user, request),
                 "solvedCount": entry["solved_count"],
                 "averageAttempts": round(entry["average_attempts"], 2),
             }

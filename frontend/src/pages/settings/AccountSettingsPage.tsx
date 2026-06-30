@@ -18,8 +18,8 @@ import { parseApiFieldErrors } from "@shared/api";
 import { VALIDATION_LIMITS } from "@shared/lib/validation";
 import {
   Avatar,
-  AppPage,
   Button,
+  ContentStage,
   FileInput,
   FormField,
   InlineMessage,
@@ -114,7 +114,7 @@ export function AccountSettingsPage() {
   }
 
   return (
-    <AppPage eyebrow="Account" title="Impostazioni profilo">
+    <ContentStage eyebrow="Account" title="Impostazioni profilo">
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
         <Panel as="aside">
           <Avatar src={user?.avatarUrl} name={user?.username} size="lg" />
@@ -240,6 +240,6 @@ export function AccountSettingsPage() {
           </Panel>
         </div>
       </div>
-    </AppPage>
+    </ContentStage>
   );
 }

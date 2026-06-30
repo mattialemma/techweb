@@ -1,7 +1,7 @@
-// FILE: LeaderboardTable.tsx
+// FILE: SolverBoard.tsx
 // Purpose: Renders leaderboard entries separately from pagination and data loading.
 // Layer: Feature UI component
-// Exports: LeaderboardTable
+// Exports: SolverBoard
 // Depends on: Challenge leaderboard type shape, Avatar, Panel, formatter helpers
 
 import { formatAverage, formatDisplayName } from "@shared/lib/formatters";
@@ -9,11 +9,11 @@ import { Avatar, Panel } from "@shared/ui";
 
 import type { LeaderboardEntry } from "../types";
 
-type LeaderboardTableProps = {
+type SolverBoardProps = {
   entries: LeaderboardEntry[];
 };
 
-export function LeaderboardTable({ entries }: LeaderboardTableProps) {
+export function SolverBoard({ entries }: SolverBoardProps) {
   return (
     <Panel padding="none" className="overflow-hidden">
       <div className="hidden grid-cols-[72px_1fr_130px_150px] border-b border-white/10 px-5 py-3 text-sm font-semibold text-zinc-400 md:grid">

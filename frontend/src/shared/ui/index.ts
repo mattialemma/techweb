@@ -1,4 +1,4 @@
-export * from "./AppPage";
+export * from "./ContentStage";
 export * from "./AuthCard";
 export * from "./Avatar";
 export * from "./Button";

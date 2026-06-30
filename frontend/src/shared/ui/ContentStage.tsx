@@ -1,14 +1,14 @@
-// FILE: AppPage.tsx
+// FILE: ContentStage.tsx
 // Purpose: Standardizes page width, top spacing, and optional page headers.
 // Layer: UI layout primitive
-// Exports: AppPage
+// Exports: ContentStage
 // Depends on: PageHeader
 
 import type { ReactNode } from "react";
 
 import { PageHeader } from "./PageHeader";
 
-type AppPageProps = {
+type ContentStageProps = {
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -17,14 +17,14 @@ type AppPageProps = {
   title?: string;
 };
 
-export function AppPage({
+export function ContentStage({
   actions,
   children,
   className = "",
   description,
   eyebrow,
   title,
-}: AppPageProps) {
+}: ContentStageProps) {
   return (
     <main className={`mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 ${className}`}>
       {eyebrow && title ? (

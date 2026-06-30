@@ -1,10 +1,10 @@
-import { AppPage, Panel } from "@shared/ui";
+import { ContentStage, Panel } from "@shared/ui";
 
 import { howToPlaySteps } from "./publicContent";
 
 export function HowToPlayPage() {
   return (
-    <AppPage
+    <ContentStage
       eyebrow="Regole"
       title="Un gioco di indizi, tentativi e pattern nascosti."
     >
@@ -17,6 +17,6 @@ export function HowToPlayPage() {
           </Panel>
         ))}
       </div>
-    </AppPage>
+    </ContentStage>
   );
 }

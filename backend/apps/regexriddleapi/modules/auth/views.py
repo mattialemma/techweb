@@ -18,7 +18,7 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 
-from ..users.serializers import UserReadSerializer
+from ..users.serializers import AccountReadSerializer
 from .password_reset import password_reset_service
 from .serializers import (
     LoginSerializer,
@@ -35,28 +35,7 @@ from .serializers import (
 User = get_user_model()
 
 
-def set_refresh_cookie(response: Response, refresh_token: str) -> None:
-    max_age = int(settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds())
-    response.set_cookie(
-        settings.AUTH_REFRESH_COOKIE_NAME,
-        refresh_token,
-        max_age=max_age,
-        httponly=True,
-        secure=settings.AUTH_REFRESH_COOKIE_SECURE,
-        samesite=settings.AUTH_REFRESH_COOKIE_SAMESITE,
-        path=settings.AUTH_REFRESH_COOKIE_PATH,
-    )
-
-
-def clear_refresh_cookie(response: Response) -> None:
-    response.delete_cookie(
-        settings.AUTH_REFRESH_COOKIE_NAME,
-        path=settings.AUTH_REFRESH_COOKIE_PATH,
-        samesite=settings.AUTH_REFRESH_COOKIE_SAMESITE,
-    )
-
-
-class CSRFTokenView(APIView):
+class SecurityTokenEndpoint(APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
 
@@ -66,7 +45,7 @@ class CSRFTokenView(APIView):
 
 
 @method_decorator(csrf_protect, name="dispatch")
-class LoginView(APIView):
+class SessionCreateEndpoint(APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
     throttle_classes = [ScopedRateThrottle]
@@ -96,16 +75,16 @@ class LoginView(APIView):
         response = Response(
             {
                 "accessToken": str(refresh.access_token),
-                "user": UserReadSerializer(auth_user, context={"request": request}).data,
+                "user": AccountReadSerializer(auth_user, context={"request": request}).data,
             }
         )
-        set_refresh_cookie(response, str(refresh))
+        attach_refresh_cookie(response, str(refresh))
         get_token(request)
         return response
 
 
 @method_decorator(csrf_protect, name="dispatch")
-class RefreshView(APIView):
+class SessionRefreshEndpoint(APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
     throttle_classes = [ScopedRateThrottle]
@@ -134,12 +113,12 @@ class RefreshView(APIView):
         response = Response({"accessToken": serializer.validated_data["access"]})
         rotated_refresh = serializer.validated_data.get("refresh")
         if rotated_refresh:
-            set_refresh_cookie(response, rotated_refresh)
+            attach_refresh_cookie(response, rotated_refresh)
         return response
 
 
 @method_decorator(csrf_protect, name="dispatch")
-class LogoutView(APIView):
+class SessionDestroyEndpoint(APIView):
     permission_classes = [permissions.AllowAny]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "logout"
@@ -153,11 +132,11 @@ class LogoutView(APIView):
             except TokenError:
                 pass
         response = Response(status=status.HTTP_204_NO_CONTENT)
-        clear_refresh_cookie(response)
+        expire_refresh_cookie(response)
         return response
 
 
-class PasswordOTPRequestView(APIView):
+class PasswordResetCodeRequestEndpoint(APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
     throttle_classes = [ScopedRateThrottle]
@@ -175,7 +154,7 @@ class PasswordOTPRequestView(APIView):
         return Response({"detail": "Se l'email esiste, riceverai un codice di recupero."})
 
 
-class PasswordOTPVerifyView(APIView):
+class PasswordResetCodeVerifyEndpoint(APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
     throttle_classes = [ScopedRateThrottle]
@@ -198,7 +177,7 @@ class PasswordOTPVerifyView(APIView):
         return Response({"valid": True, "expiresAt": expires_at})
 
 
-class PasswordResetView(APIView):
+class PasswordResetApplyEndpoint(APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
     throttle_classes = [ScopedRateThrottle]
@@ -223,3 +202,24 @@ class PasswordResetView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response({"detail": "Password aggiornata."})
+
+
+def attach_refresh_cookie(response: Response, refresh_token: str) -> None:
+    max_age = int(settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds())
+    response.set_cookie(
+        settings.AUTH_REFRESH_COOKIE_NAME,
+        refresh_token,
+        max_age=max_age,
+        httponly=True,
+        secure=settings.AUTH_REFRESH_COOKIE_SECURE,
+        samesite=settings.AUTH_REFRESH_COOKIE_SAMESITE,
+        path=settings.AUTH_REFRESH_COOKIE_PATH,
+    )
+
+
+def expire_refresh_cookie(response: Response) -> None:
+    response.delete_cookie(
+        settings.AUTH_REFRESH_COOKIE_NAME,
+        path=settings.AUTH_REFRESH_COOKIE_PATH,
+        samesite=settings.AUTH_REFRESH_COOKIE_SAMESITE,
+    )

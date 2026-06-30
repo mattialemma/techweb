@@ -1,22 +1,22 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { ChallengeCard, useChallenges, type ChallengeOrdering } from "@features/challenges";
-import { AppPage, Button, InlineMessage, Panel } from "@shared/ui";
+import { PuzzleTile, usePuzzleCatalog, type PuzzleOrdering } from "@features/challenges";
+import { Button, ContentStage, InlineMessage, Panel } from "@shared/ui";
 
 export function ChallengesPage() {
   const [page, setPage] = useState(1);
-  const [ordering, setOrdering] = useState<ChallengeOrdering>("newest");
-  const { data, isLoading, isError } = useChallenges(page, ordering);
+  const [ordering, setOrdering] = useState<PuzzleOrdering>("newest");
+  const { data, isLoading, isError } = usePuzzleCatalog(page, ordering);
   const challenges = data?.results ?? [];
 
-  function handleOrderingChange(nextOrdering: ChallengeOrdering) {
+  function chooseOrdering(nextOrdering: PuzzleOrdering) {
     setOrdering(nextOrdering);
     setPage(1);
   }
 
   return (
-    <AppPage
+    <ContentStage
         eyebrow="Enigmi"
         title="Enigmi pubblicati"
         description="Consulta gli enigmi disponibili. Le regex segrete e i controlli restano nascosti."
@@ -35,7 +35,7 @@ export function ChallengesPage() {
             <select
               className="min-h-10 rounded border border-white/10 bg-zinc-950/70 px-3 py-2 text-sm text-white outline-none transition hover:border-white/20 focus:border-lime-300 focus:ring-2 focus:ring-lime-300/20"
               value={ordering}
-              onChange={(event) => handleOrderingChange(event.target.value as ChallengeOrdering)}
+              onChange={(event) => chooseOrdering(event.target.value as PuzzleOrdering)}
             >
               <option value="newest">Piu nuove</option>
               <option value="oldest">Piu vecchie</option>
@@ -59,7 +59,7 @@ export function ChallengesPage() {
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {challenges.map((challenge) => (
-            <ChallengeCard key={challenge.challengeId} challenge={challenge} />
+            <PuzzleTile key={challenge.challengeId} challenge={challenge} />
           ))}
         </div>
         {!isLoading && !isError && data && data.count > challenges.length ? (
@@ -86,6 +86,6 @@ export function ChallengesPage() {
           </div>
         ) : null}
       </section>
-    </AppPage>
+    </ContentStage>
   );
 }

@@ -47,7 +47,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "anymail",
     "corsheaders",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
@@ -122,19 +121,8 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv("DATA_UPLOAD_MAX_MEMORY_SIZE", str(3
 FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv("FILE_UPLOAD_MAX_MEMORY_SIZE", str(3 * 1024 * 1024)))
 CHALLENGE_REGEX_TIMEOUT_SECONDS = float(os.getenv("CHALLENGE_REGEX_TIMEOUT_SECONDS", "0.05"))
 
-EMAIL_PROVIDER = os.getenv("EMAIL_PROVIDER", "console").lower()
-BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")
-BREVO_OTP_TEMPLATE_ID = os.getenv("BREVO_OTP_TEMPLATE_ID", "")
-BREVO_SENDER_NAME = os.getenv("BREVO_SENDER_NAME", "")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@regexriddle.local")
-
-if EMAIL_PROVIDER == "brevo":
-    EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
-    ANYMAIL = {
-        "BREVO_API_KEY": BREVO_API_KEY,
-    }
-else:
-    EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 
 default_cors_origins = "http://localhost:5173,http://127.0.0.1:5173"
 CORS_ALLOWED_ORIGINS = csv_env("CORS_ALLOWED_ORIGINS", default_cors_origins)

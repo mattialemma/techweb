@@ -1,4 +1,4 @@
-// FILE: PageShell.tsx
+// FILE: ApplicationChrome.tsx
 // Purpose: Renders the shared app shell, top navigation, auth actions, and route outlet.
 // Layer: Widget
 // Depends on: React Router, auth context, shared UI primitives
@@ -10,7 +10,7 @@ import { privateLinks, publicLinks } from "@app/navigation";
 import { useAuth } from "@features/auth";
 import { Avatar, Button } from "@shared/ui";
 
-function navClass({ isActive }: { isActive: boolean }) {
+function composeNavigationState({ isActive }: { isActive: boolean }) {
   return `rounded px-3 py-2 text-sm font-black transition focus:outline-none focus:ring-2 focus:ring-lime-300/25 ${
     isActive
       ? "bg-lime-300/[0.14] text-lime-100 shadow-inner shadow-lime-950/20"
@@ -18,7 +18,7 @@ function navClass({ isActive }: { isActive: boolean }) {
   }`;
 }
 
-export function PageShell() {
+export function ApplicationChrome() {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [isConfirmingLogout, setIsConfirmingLogout] = useState(false);
@@ -62,13 +62,13 @@ export function PageShell() {
 
           <div className="flex flex-wrap items-center gap-2">
             {publicLinks.map((link) => (
-              <NavLink key={link.to} to={link.to} className={navClass}>
+              <NavLink key={link.to} to={link.to} className={composeNavigationState}>
                 {link.label}
               </NavLink>
             ))}
             {isAuthenticated
               ? privateLinks.map((link) => (
-                  <NavLink key={link.to} to={link.to} className={navClass}>
+                  <NavLink key={link.to} to={link.to} className={composeNavigationState}>
                     {link.label}
                   </NavLink>
                 ))

@@ -3,26 +3,26 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { useAuth } from "@features/auth";
 import {
-  AttemptHistory,
-  AttemptSolverPanel,
-  ChallengeSummaryPanel,
-  useChallenge,
-  useCreateAttempt,
-  useMyChallengeAttempts,
-  validateProposedRegex,
+  AttemptLogPanel,
+  PuzzleBriefPanel,
+  RegexWorkbenchPanel,
+  inspectSubmittedPattern,
+  usePersonalAttemptLog,
+  usePuzzle,
+  useSubmitPuzzleAttempt,
   type Attempt,
 } from "@features/challenges";
 import { parseApiMessage } from "@shared/api";
-import { AppPage, Button, InlineMessage } from "@shared/ui";
+import { Button, ContentStage, InlineMessage } from "@shared/ui";
 
 export function ChallengeDetailPage() {
   const params = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const challengeId = params.challengeId ?? "";
-  const { data: challenge, isLoading, isError } = useChallenge(challengeId);
-  const { data: attempts = [], isLoading: attemptsLoading } = useMyChallengeAttempts(challengeId);
-  const createAttempt = useCreateAttempt();
+  const { data: challenge, isLoading, isError } = usePuzzle(challengeId);
+  const { data: attempts = [], isLoading: attemptsLoading } = usePersonalAttemptLog(challengeId);
+  const submitAttempt = useSubmitPuzzleAttempt();
   const [proposedRegex, setProposedRegex] = useState("");
   const [fieldError, setFieldError] = useState("");
   const [submitError, setSubmitError] = useState("");
@@ -37,12 +37,12 @@ export function ChallengeDetailPage() {
     event.preventDefault();
     setSubmitError("");
     setLastAttempt(null);
-    const validationError = validateProposedRegex(proposedRegex);
+    const validationError = inspectSubmittedPattern(proposedRegex);
     setFieldError(validationError ?? "");
     if (validationError) return;
 
     try {
-      const attempt = await createAttempt.mutateAsync({
+      const attempt = await submitAttempt.mutateAsync({
         challengeId,
         proposedRegex,
       });
@@ -55,48 +55,48 @@ export function ChallengeDetailPage() {
 
   if (!challengeId) {
     return (
-      <AppPage>
+      <ContentStage>
         <InlineMessage tone="error">Sfida non valida.</InlineMessage>
-      </AppPage>
+      </ContentStage>
     );
   }
 
   if (isLoading) {
     return (
-      <AppPage>
+      <ContentStage>
         <InlineMessage>Caricamento sfida...</InlineMessage>
-      </AppPage>
+      </ContentStage>
     );
   }
 
   if (isError || !challenge) {
     return (
-      <AppPage>
+      <ContentStage>
         <InlineMessage tone="error">Sfida non trovata o non disponibile.</InlineMessage>
         <Button className="mt-4" variant="secondary" onClick={() => navigate("/challenges")}>
           Torna alle sfide
         </Button>
-      </AppPage>
+      </ContentStage>
     );
   }
 
   return (
-    <AppPage>
-      <div className="mb-6">
+    <ContentStage className="max-w-6xl px-5 py-8 sm:px-6">
+      <div className="mb-8">
         <Link className="text-sm font-black text-lime-300 hover:text-lime-200" to="/challenges">
           Torna all'archivio
         </Link>
       </div>
 
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <ChallengeSummaryPanel challenge={challenge} />
+      <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] xl:gap-8">
+        <PuzzleBriefPanel challenge={challenge} />
 
-        <aside className="min-w-0 space-y-5">
-          <AttemptSolverPanel
+        <aside className="min-w-0 xl:pt-24">
+          <RegexWorkbenchPanel
             fieldError={fieldError}
             hasSolvedChallenge={hasSolvedChallenge}
             isAuthor={isAuthor}
-            isSubmitting={createAttempt.isPending}
+            isSubmitting={submitAttempt.isPending}
             lastAttempt={lastAttempt}
             onRegexChange={setProposedRegex}
             onSubmit={handleSubmit}
@@ -104,10 +104,10 @@ export function ChallengeDetailPage() {
             solvedAttemptNumber={solvedAttemptNumber}
             submitError={submitError}
           />
-
-          <AttemptHistory attempts={attempts} isLoading={attemptsLoading} />
         </aside>
       </div>
-    </AppPage>
+
+      <AttemptLogPanel attempts={attempts} isLoading={attemptsLoading} />
+    </ContentStage>
   );
 }

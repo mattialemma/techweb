@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
-from .services import email_exists
+from .services import account_email_is_taken
 
 User = get_user_model()
 
@@ -18,7 +18,7 @@ EMAIL_MAX_LENGTH = 128
 NAME_MAX_LENGTH = 25
 
 
-def user_avatar_url(user, request=None) -> str | None:
+def build_avatar_url(user, request=None) -> str | None:
     avatar = getattr(getattr(user, "profile", None), "avatar", None)
     if not avatar:
         return None
@@ -31,7 +31,7 @@ def user_avatar_url(user, request=None) -> str | None:
         return None
 
 
-class UserReadSerializer(serializers.ModelSerializer):
+class AccountReadSerializer(serializers.ModelSerializer):
     userId = serializers.IntegerField(source="id", read_only=True)
     firstName = serializers.CharField(source="first_name", read_only=True)
     lastName = serializers.CharField(source="last_name", read_only=True)
@@ -42,10 +42,10 @@ class UserReadSerializer(serializers.ModelSerializer):
         fields = ("userId", "username", "email", "firstName", "lastName", "avatarUrl")
 
     def get_avatarUrl(self, user) -> str | None:
-        return user_avatar_url(user, self.context.get("request"))
+        return build_avatar_url(user, self.context.get("request"))
 
 
-def validate_password_complexity(value: str) -> None:
+def enforce_password_rules(value: str) -> None:
     if len(value) > PASSWORD_MAX_LENGTH:
         raise serializers.ValidationError("La password puo avere al massimo 20 caratteri.")
     if len(value) < 8:
@@ -60,7 +60,7 @@ def validate_password_complexity(value: str) -> None:
         raise serializers.ValidationError("La password deve contenere un carattere speciale.")
 
 
-class RegisterUserSerializer(serializers.Serializer):
+class AccountCreateSerializer(serializers.Serializer):
     username = serializers.CharField(
         max_length=USERNAME_MAX_LENGTH,
         error_messages={
@@ -116,12 +116,12 @@ class RegisterUserSerializer(serializers.Serializer):
 
     def validate_email(self, value: str) -> str:
         email = value.strip().lower()
-        if email_exists(email):
+        if account_email_is_taken(email):
             raise serializers.ValidationError("Email gia in uso.")
         return email
 
     def validate_password(self, value: str) -> str:
-        validate_password_complexity(value)
+        enforce_password_rules(value)
         validate_password(value)
         return value
 
@@ -148,7 +148,7 @@ class RegisterUserSerializer(serializers.Serializer):
         return user
 
 
-class UpdateCurrentUserSerializer(serializers.Serializer):
+class AccountUpdateSerializer(serializers.Serializer):
     username = serializers.CharField(required=False, max_length=USERNAME_MAX_LENGTH)
     email = serializers.EmailField(required=False, max_length=EMAIL_MAX_LENGTH)
     firstName = serializers.CharField(required=False, max_length=NAME_MAX_LENGTH)
@@ -166,7 +166,7 @@ class UpdateCurrentUserSerializer(serializers.Serializer):
     def validate_email(self, value: str) -> str:
         email = value.strip().lower()
         user = self.context["request"].user
-        if email_exists(email, excluding_user=user):
+        if account_email_is_taken(email, excluding_user=user):
             raise serializers.ValidationError("Email already exists.")
         return email
 
@@ -198,7 +198,7 @@ class UpdateCurrentUserSerializer(serializers.Serializer):
         return instance
 
 
-class ChangeCurrentPasswordSerializer(serializers.Serializer):
+class AccountPasswordChangeSerializer(serializers.Serializer):
     currentPassword = serializers.CharField(max_length=PASSWORD_MAX_LENGTH)
     newPassword = serializers.CharField(min_length=8, max_length=PASSWORD_MAX_LENGTH)
 
@@ -212,7 +212,7 @@ class ChangeCurrentPasswordSerializer(serializers.Serializer):
         user = self.context["request"].user
         if user.check_password(value):
             raise serializers.ValidationError("La nuova password deve essere diversa.")
-        validate_password_complexity(value)
+        enforce_password_rules(value)
         validate_password(value, user)
         return value
 
@@ -223,7 +223,7 @@ class ChangeCurrentPasswordSerializer(serializers.Serializer):
         return user
 
 
-class AvatarUploadSerializer(serializers.Serializer):
+class AccountAvatarUploadSerializer(serializers.Serializer):
     avatar = serializers.ImageField()
 
     def validate_avatar(self, value):

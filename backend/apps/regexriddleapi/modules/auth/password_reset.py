@@ -14,7 +14,7 @@ from rest_framework import serializers
 
 from ...common.email_sender import email_sender
 from ..users.models import PasswordResetOTP
-from ..users.serializers import validate_password_complexity
+from ..users.serializers import enforce_password_rules
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -31,7 +31,7 @@ class PasswordResetService:
         self._sender = sender
 
     def issue_otp_for_email(self, email: str) -> None:
-        user = self._find_active_user_by_email(email)
+        user = self._lookup_active_account(email)
         if not user:
             logger.info("password_reset_unknown email_hash=%s", self._email_hash(email))
             return
@@ -49,30 +49,30 @@ class PasswordResetService:
 
         try:
             self.send_otp_email(email=user.email, code=raw_code)
-            self._mark_pending_otp_delivered(user=user, pending_otp=pending_otp)
+            self._publish_pending_code(user=user, pending_otp=pending_otp)
             logger.info("password_reset_sent user_id=%s", user.id)
         except Exception:
             logger.exception("password_reset_send_failed user_id=%s", user.id)
 
     def verify_otp(self, *, email: str, code: str) -> tuple[bool, datetime | None]:
-        user = self._find_active_user_by_email(email)
+        user = self._lookup_active_account(email)
         if not user:
             logger.info("password_reset_verify_unknown email_hash=%s", self._email_hash(email))
             return False, None
 
         with transaction.atomic():
-            valid, otp = self._validate_otp_attempt(user=user, code=code, lock=True)
+            valid, otp = self._check_code_attempt(user=user, code=code, lock=True)
 
         return (True, otp.expires_at) if valid and otp else (False, None)
 
     def reset_password_with_otp(self, *, email: str, code: str, new_password: str) -> bool:
-        user = self._find_active_user_by_email(email)
+        user = self._lookup_active_account(email)
         if not user:
             logger.info("password_reset_apply_unknown email_hash=%s", self._email_hash(email))
             return False
 
         with transaction.atomic():
-            valid, otp = self._validate_otp_attempt(
+            valid, otp = self._check_code_attempt(
                 user=user,
                 code=code,
                 lock=True,
@@ -80,8 +80,8 @@ class PasswordResetService:
             if not valid or otp is None:
                 return False
 
-            self._validate_new_password(user=user, new_password=new_password)
-            if not self._consume_otp(otp=otp):
+            self._enforce_new_password(user=user, new_password=new_password)
+            if not self._retire_code(otp=otp):
                 return False
             user.set_password(new_password)
             user.save(update_fields=["password"])
@@ -96,18 +96,20 @@ class PasswordResetService:
                 f"Il tuo codice REGEXRIDDLE e {code}. "
                 f"Scade tra {OTP_EXPIRY_MINUTES} minuti."
             ),
-            brevo_template_id=getattr(settings, "BREVO_OTP_TEMPLATE_ID", ""),
-            brevo_merge_data={
-                "otp_code": code,
-                "expiry_minutes": OTP_EXPIRY_MINUTES,
-                "product_name": PRODUCT_NAME,
-            },
         )
 
-    def _find_active_user_by_email(self, email: str):
+    def _lookup_active_account(self, email: str):
         return User.objects.filter(email__iexact=email.strip(), is_active=True).first()
 
-    def _validate_otp_attempt(
+    def _enforce_new_password(self, *, user, new_password: str) -> None:
+        if user.check_password(new_password):
+            raise serializers.ValidationError(
+                {"newPassword": "La nuova password deve essere diversa da quella attuale."}
+            )
+        enforce_password_rules(new_password)
+        validate_password(new_password, user=user)
+
+    def _check_code_attempt(
         self,
         *,
         user,
@@ -123,7 +125,7 @@ class PasswordResetService:
             return False, None
 
         if otp.matches_code(code):
-            if consume_on_match and not self._consume_otp(otp=otp):
+            if consume_on_match and not self._retire_code(otp=otp):
                 return False, None
             return True, otp
 
@@ -134,26 +136,18 @@ class PasswordResetService:
         otp.save(update_fields=["attempt_count", "last_attempt_at", "is_used"])
         return False, otp
 
-    def _consume_otp(self, *, otp: PasswordResetOTP) -> bool:
+    def _retire_code(self, *, otp: PasswordResetOTP) -> bool:
         consumed_rows = PasswordResetOTP.objects.filter(pk=otp.pk, is_used=False).update(is_used=True)
         if consumed_rows != 1:
             return False
         otp.is_used = True
         return True
 
-    def _mark_pending_otp_delivered(self, *, user, pending_otp: PasswordResetOTP) -> None:
+    def _publish_pending_code(self, *, user, pending_otp: PasswordResetOTP) -> None:
         with transaction.atomic():
             PasswordResetOTP.objects.filter(user=user, is_used=False).update(is_used=True)
             pending_otp.is_used = False
             pending_otp.save(update_fields=["is_used"])
-
-    def _validate_new_password(self, *, user, new_password: str) -> None:
-        if user.check_password(new_password):
-            raise serializers.ValidationError(
-                {"newPassword": "La nuova password deve essere diversa da quella attuale."}
-            )
-        validate_password_complexity(new_password)
-        validate_password(new_password, user=user)
 
     @staticmethod
     def _email_hash(email: str) -> str:

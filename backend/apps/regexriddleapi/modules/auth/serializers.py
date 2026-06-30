@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from ..users.serializers import UserReadSerializer
+from ..users.serializers import AccountReadSerializer
 from ..users.serializers import EMAIL_MAX_LENGTH, PASSWORD_MAX_LENGTH
 
 
@@ -30,7 +30,7 @@ class PasswordResetSerializer(serializers.Serializer):
 
 class LoginResponseSerializer(serializers.Serializer):
     accessToken = serializers.CharField()
-    user = UserReadSerializer()
+    user = AccountReadSerializer()
 
 
 class RefreshResponseSerializer(serializers.Serializer):

@@ -2,15 +2,15 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
-  ControlListEditor,
-  useCreateChallenge,
-  validateChallengePayload,
+  HiddenControlEditor,
+  inspectPuzzleDraft,
+  usePublishPuzzle,
   type ChallengeValidationErrors,
   type CreateChallengePayload,
 } from "@features/challenges";
 import { parseApiFieldErrors } from "@shared/api";
 import { VALIDATION_LIMITS } from "@shared/lib/validation";
-import { AppPage, Button, FormField, InlineMessage, Input, Panel, Textarea } from "@shared/ui";
+import { Button, ContentStage, FormField, InlineMessage, Input, Panel, Textarea } from "@shared/ui";
 
 const emptyChallenge: CreateChallengePayload = {
   title: "",
@@ -22,17 +22,17 @@ const emptyChallenge: CreateChallengePayload = {
   negativeControls: [""],
 };
 
-function updateControl(values: string[], index: number, nextValue: string): string[] {
+function replaceControlAt(values: string[], index: number, nextValue: string): string[] {
   return values.map((value, currentIndex) => (currentIndex === index ? nextValue : value));
 }
 
-function removeControl(values: string[], index: number): string[] {
+function dropControlAt(values: string[], index: number): string[] {
   return values.length === 1 ? values : values.filter((_, currentIndex) => currentIndex !== index);
 }
 
 export function CreateChallengePage() {
   const navigate = useNavigate();
-  const createChallenge = useCreateChallenge();
+  const publishPuzzle = usePublishPuzzle();
   const [values, setValues] = useState<CreateChallengePayload>(emptyChallenge);
   const [errors, setErrors] = useState<ChallengeValidationErrors>({});
   const [submitError, setSubmitError] = useState("");
@@ -46,13 +46,13 @@ export function CreateChallengePage() {
       positiveControls: values.positiveControls,
       negativeControls: values.negativeControls,
     };
-    const nextErrors = validateChallengePayload(payload);
+    const nextErrors = inspectPuzzleDraft(payload);
     setErrors(nextErrors);
     setSubmitError("");
     if (Object.keys(nextErrors).length > 0) return;
 
     try {
-      await createChallenge.mutateAsync(payload);
+      await publishPuzzle.mutateAsync(payload);
       navigate("/challenges", { replace: true });
     } catch (error) {
       const parsedErrors = parseApiFieldErrors<ChallengeValidationErrors>(error);
@@ -66,7 +66,7 @@ export function CreateChallengePage() {
   }
 
   return (
-    <AppPage
+    <ContentStage
         eyebrow="Nuovo pattern"
         title="Prepara una sfida"
         description="Gli esempi sono pubblici; regex e controlli restano nascosti nel backend."
@@ -119,7 +119,7 @@ export function CreateChallengePage() {
         </Panel>
 
         <div className="grid gap-5 lg:grid-cols-2">
-          <ControlListEditor
+          <HiddenControlEditor
             error={errors.positiveControls}
             kind="positive"
             values={values.positiveControls}
@@ -129,17 +129,17 @@ export function CreateChallengePage() {
             onChange={(index, value) =>
               setValues({
                 ...values,
-                positiveControls: updateControl(values.positiveControls, index, value),
+                positiveControls: replaceControlAt(values.positiveControls, index, value),
               })
             }
             onRemove={(index) =>
               setValues({
                 ...values,
-                positiveControls: removeControl(values.positiveControls, index),
+                positiveControls: dropControlAt(values.positiveControls, index),
               })
             }
           />
-          <ControlListEditor
+          <HiddenControlEditor
             error={errors.negativeControls}
             kind="negative"
             values={values.negativeControls}
@@ -149,13 +149,13 @@ export function CreateChallengePage() {
             onChange={(index, value) =>
               setValues({
                 ...values,
-                negativeControls: updateControl(values.negativeControls, index, value),
+                negativeControls: replaceControlAt(values.negativeControls, index, value),
               })
             }
             onRemove={(index) =>
               setValues({
                 ...values,
-                negativeControls: removeControl(values.negativeControls, index),
+                negativeControls: dropControlAt(values.negativeControls, index),
               })
             }
           />
@@ -165,11 +165,11 @@ export function CreateChallengePage() {
           <Button type="button" variant="secondary" onClick={() => navigate("/challenges")}>
             Annulla
           </Button>
-          <Button type="submit" isLoading={createChallenge.isPending}>
+          <Button type="submit" isLoading={publishPuzzle.isPending}>
             Pubblica sfida
           </Button>
         </div>
       </form>
-    </AppPage>
+    </ContentStage>
   );
 }

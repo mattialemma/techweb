@@ -1,13 +1,13 @@
-// FILE: ControlListEditor.tsx
+// FILE: HiddenControlEditor.tsx
 // Purpose: Edits the hidden positive or negative control strings used when creating a challenge.
 // Layer: Feature UI component
-// Exports: ControlListEditor
+// Exports: HiddenControlEditor
 // Depends on: shared Input/Button and validation limits
 
 import { VALIDATION_LIMITS } from "@shared/lib/validation";
 import { Button, Input } from "@shared/ui";
 
-type ControlListEditorProps = {
+type HiddenControlEditorProps = {
   error?: string;
   kind: "negative" | "positive";
   onAdd: () => void;
@@ -29,7 +29,7 @@ const controlCopy = {
   },
 };
 
-export function ControlListEditor({ error, kind, onAdd, onChange, onRemove, values }: ControlListEditorProps) {
+export function HiddenControlEditor({ error, kind, onAdd, onChange, onRemove, values }: HiddenControlEditorProps) {
   const copy = controlCopy[kind];
 
   return (

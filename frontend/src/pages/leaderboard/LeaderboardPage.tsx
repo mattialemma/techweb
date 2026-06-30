@@ -1,15 +1,15 @@
 import { useState } from "react";
 
-import { LeaderboardTable, useLeaderboard } from "@features/challenges";
-import { AppPage, Button, InlineMessage, Panel } from "@shared/ui";
+import { SolverBoard, useSolverBoard } from "@features/challenges";
+import { Button, ContentStage, InlineMessage, Panel } from "@shared/ui";
 
 export function LeaderboardPage() {
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError } = useLeaderboard(page);
+  const { data, isLoading, isError } = useSolverBoard(page);
   const entries = data?.results ?? [];
 
   return (
-    <AppPage
+    <ContentStage
         eyebrow="Podio"
         title="Migliori risolutori"
         description="Conta quante sfide risolvi e quanti tentativi ti servono in media."
@@ -29,7 +29,7 @@ export function LeaderboardPage() {
         </Panel>
       ) : null}
 
-      {entries.length > 0 ? <LeaderboardTable entries={entries} /> : null}
+      {entries.length > 0 ? <SolverBoard entries={entries} /> : null}
 
       {!isLoading && !isError && data && data.count > entries.length ? (
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
@@ -54,6 +54,6 @@ export function LeaderboardPage() {
           </div>
         </div>
       ) : null}
-    </AppPage>
+    </ContentStage>
   );
 }

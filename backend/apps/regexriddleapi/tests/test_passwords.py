@@ -1,7 +1,6 @@
 """Password recovery and account password-change API tests."""
 
 import re
-from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core import mail
@@ -9,7 +8,6 @@ from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.regexriddleapi.common.email_sender import EmailSender
 from apps.regexriddleapi.modules.users.models import PasswordResetOTP
 
 User = get_user_model()
@@ -131,44 +129,6 @@ class PasswordApiTests(APITestCase):
         )
 
         self.assertEqual(retry_response.status_code, status.HTTP_200_OK)
-
-    @override_settings(
-        EMAIL_PROVIDER="brevo",
-        BREVO_SENDER_NAME="REGEXRIDDLE",
-        DEFAULT_FROM_EMAIL="noreply@example.com",
-    )
-    def test_brevo_sender_uses_transactional_template_attributes(self):
-        sent_messages = []
-
-        class FakeEmailMessage:
-            def __init__(self, *, subject, body, from_email, to):
-                self.subject = subject
-                self.body = body
-                self.from_email = from_email
-                self.to = to
-
-            def send(self, *, fail_silently):
-                self.fail_silently = fail_silently
-                sent_messages.append(self)
-
-        with patch("apps.regexriddleapi.common.email_sender.EmailMessage", FakeEmailMessage):
-            EmailSender().send(
-                email="solver@example.com",
-                plain_subject="ignored for template",
-                plain_message="ignored for template",
-                brevo_template_id="123",
-                brevo_merge_data={"otp_code": "123456", "expiry_minutes": 5},
-            )
-
-        self.assertEqual(len(sent_messages), 1)
-        message = sent_messages[0]
-        self.assertIsNone(message.subject)
-        self.assertEqual(message.template_id, 123)
-        self.assertEqual(message.merge_global_data["otp_code"], "123456")
-        self.assertEqual(message.merge_global_data["expiry_minutes"], 5)
-        self.assertEqual(message.from_email, "REGEXRIDDLE <noreply@example.com>")
-        self.assertEqual(message.to, ["solver@example.com"])
-        self.assertFalse(message.fail_silently)
 
     def test_change_current_password_requires_correct_current_password(self):
         self.authenticate()

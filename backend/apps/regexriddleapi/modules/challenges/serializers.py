@@ -1,9 +1,9 @@
 from django.db import transaction
 from rest_framework import serializers
 
-from ..users.serializers import user_avatar_url
+from ..users.serializers import build_avatar_url
 from .models import Attempt, Challenge, ControlString, ControlStringKind
-from .services import validate_challenge_regex_rules
+from .rules import verify_challenge_rule_set
 
 
 class AuthorSummarySerializer(serializers.Serializer):
@@ -12,7 +12,7 @@ class AuthorSummarySerializer(serializers.Serializer):
     avatarUrl = serializers.SerializerMethodField()
 
     def get_avatarUrl(self, user) -> str | None:
-        return user_avatar_url(user, self.context.get("request"))
+        return build_avatar_url(user, self.context.get("request"))
 
 
 class ChallengeReadSerializer(serializers.ModelSerializer):
@@ -57,7 +57,7 @@ class ChallengeCreateSerializer(serializers.Serializer):
         return title
 
     def validate(self, attrs):
-        validate_challenge_regex_rules(
+        verify_challenge_rule_set(
             secret_regex=attrs["secretRegex"],
             positive_example=attrs["positiveExample"],
             negative_example=attrs["negativeExample"],

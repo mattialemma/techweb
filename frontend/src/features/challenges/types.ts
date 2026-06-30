@@ -5,7 +5,7 @@ export type PaginatedResponse<T> = {
   results: T[];
 };
 
-export type ChallengeOrdering = "newest" | "oldest";
+export type PuzzleOrdering = "newest" | "oldest";
 
 export type ChallengeAuthor = {
   userId: number;
