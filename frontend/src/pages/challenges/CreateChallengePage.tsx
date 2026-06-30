@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
+  ControlListEditor,
   useCreateChallenge,
   validateChallengePayload,
   type ChallengeValidationErrors,
@@ -9,7 +10,7 @@ import {
 } from "@features/challenges";
 import { parseApiFieldErrors } from "@shared/api";
 import { VALIDATION_LIMITS } from "@shared/lib/validation";
-import { Button, FormField, InlineMessage, Input, PageHeader, Panel, Textarea } from "@shared/ui";
+import { AppPage, Button, FormField, InlineMessage, Input, Panel, Textarea } from "@shared/ui";
 
 const emptyChallenge: CreateChallengePayload = {
   title: "",
@@ -64,65 +65,12 @@ export function CreateChallengePage() {
     }
   }
 
-  function renderControls(kind: "positiveControls" | "negativeControls") {
-    const label = kind === "positiveControls" ? "Controlli positivi" : "Controlli negativi";
-    const toneClass =
-      kind === "positiveControls"
-        ? "border-emerald-300/15 bg-emerald-300/5"
-        : "border-red-300/15 bg-red-300/5";
-    const controls = values[kind];
-
-    return (
-      <div className={`rounded-lg border p-4 ${toneClass}`}>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="font-bold">{label}</h2>
-            <p className="mt-1 text-sm text-slate-400">Da 1 a 10 stringhe segrete.</p>
-          </div>
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={controls.length >= VALIDATION_LIMITS.maxControlsPerKind}
-            onClick={() => setValues({ ...values, [kind]: [...controls, ""] })}
-          >
-            Aggiungi
-          </Button>
-        </div>
-
-        <div className="mt-4 space-y-3">
-          {controls.map((control, index) => (
-            <div key={`${kind}-${index}`} className="flex gap-2">
-              <Input
-                value={control}
-                maxLength={VALIDATION_LIMITS.control}
-                placeholder={kind === "positiveControls" ? "AB123" : "ab123"}
-                onChange={(event) =>
-                  setValues({ ...values, [kind]: updateControl(controls, index, event.target.value) })
-                }
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                disabled={controls.length === 1}
-                onClick={() => setValues({ ...values, [kind]: removeControl(controls, index) })}
-              >
-                X
-              </Button>
-            </div>
-          ))}
-        </div>
-        {errors[kind] ? <p className="mt-3 text-sm text-red-300">{errors[kind]}</p> : null}
-      </div>
-    );
-  }
-
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6">
-      <PageHeader
-        eyebrow="Nuova sfida"
-        title="Crea un regex riddle"
-        description="Gli esempi saranno pubblici; regex e controlli resteranno segreti nel backend."
-      />
+    <AppPage
+        eyebrow="Nuovo pattern"
+        title="Prepara una sfida"
+        description="Gli esempi sono pubblici; regex e controlli restano nascosti nel backend."
+    >
 
       <form className="space-y-5" onSubmit={handleSubmit}>
         {submitError ? <InlineMessage tone="error">{submitError}</InlineMessage> : null}
@@ -171,8 +119,46 @@ export function CreateChallengePage() {
         </Panel>
 
         <div className="grid gap-5 lg:grid-cols-2">
-          {renderControls("positiveControls")}
-          {renderControls("negativeControls")}
+          <ControlListEditor
+            error={errors.positiveControls}
+            kind="positive"
+            values={values.positiveControls}
+            onAdd={() =>
+              setValues({ ...values, positiveControls: [...values.positiveControls, ""] })
+            }
+            onChange={(index, value) =>
+              setValues({
+                ...values,
+                positiveControls: updateControl(values.positiveControls, index, value),
+              })
+            }
+            onRemove={(index) =>
+              setValues({
+                ...values,
+                positiveControls: removeControl(values.positiveControls, index),
+              })
+            }
+          />
+          <ControlListEditor
+            error={errors.negativeControls}
+            kind="negative"
+            values={values.negativeControls}
+            onAdd={() =>
+              setValues({ ...values, negativeControls: [...values.negativeControls, ""] })
+            }
+            onChange={(index, value) =>
+              setValues({
+                ...values,
+                negativeControls: updateControl(values.negativeControls, index, value),
+              })
+            }
+            onRemove={(index) =>
+              setValues({
+                ...values,
+                negativeControls: removeControl(values.negativeControls, index),
+              })
+            }
+          />
         </div>
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -184,6 +170,6 @@ export function CreateChallengePage() {
           </Button>
         </div>
       </form>
-    </main>
+    </AppPage>
   );
 }

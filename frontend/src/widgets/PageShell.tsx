@@ -1,49 +1,62 @@
+// FILE: PageShell.tsx
+// Purpose: Renders the shared app shell, top navigation, auth actions, and route outlet.
+// Layer: Widget
+// Depends on: React Router, auth context, shared UI primitives
+
+import { useState } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 
+import { privateLinks, publicLinks } from "@app/navigation";
 import { useAuth } from "@features/auth";
 import { Avatar, Button } from "@shared/ui";
 
-const publicLinks = [{ to: "/how-to-play", label: "Come si gioca" }];
-const privateLinks = [
-  { to: "/challenges", label: "Sfide" },
-  { to: "/leaderboard", label: "Classifica" },
-  { to: "/settings", label: "Account" },
-];
-
 function navClass({ isActive }: { isActive: boolean }) {
-  return `rounded-md px-3 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-300/25 ${
+  return `rounded px-3 py-2 text-sm font-black transition focus:outline-none focus:ring-2 focus:ring-lime-300/25 ${
     isActive
-      ? "bg-emerald-300/[0.12] text-emerald-100 shadow-inner shadow-emerald-950/20"
-      : "text-slate-300 hover:bg-white/10 hover:text-white"
+      ? "bg-lime-300/[0.14] text-lime-100 shadow-inner shadow-lime-950/20"
+      : "text-zinc-300 hover:bg-white/10 hover:text-white"
   }`;
 }
 
 export function PageShell() {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const [isConfirmingLogout, setIsConfirmingLogout] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   async function handleLogout() {
-    await logout();
-    navigate("/", { replace: true });
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      navigate("/", { replace: true });
+    } finally {
+      setIsLoggingOut(false);
+      setIsConfirmingLogout(false);
+    }
   }
 
   return (
     <div className="min-h-screen text-white">
-      <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/78 shadow-lg shadow-black/15 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b border-white/10 bg-zinc-950/82 shadow-lg shadow-black/20 backdrop-blur-xl">
         <nav className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center justify-between gap-3">
             <Link to="/" className="flex items-center gap-3 text-lg font-black tracking-wide text-white">
-              <span className="grid h-9 w-9 place-items-center rounded-md border border-emerald-300/25 bg-emerald-300/10 font-mono text-sm text-emerald-200 shadow-lg shadow-emerald-950/20">
-                .*
+              <span className="grid h-9 w-9 place-items-center rounded border border-lime-300/30 bg-lime-300/10 font-mono text-sm text-lime-200 shadow-lg shadow-lime-950/20">
+                rx
               </span>
               <span>
-                REGEX<span className="text-emerald-300">RIDDLE</span>
+                PATTERN<span className="text-lime-300">LAB</span>
               </span>
             </Link>
             {user ? (
-              <div className="lg:hidden">
+              <Link
+                aria-label="Apri profilo"
+                className="lg:hidden"
+                to="/settings"
+                onClick={() => setIsConfirmingLogout(false)}
+              >
                 <Avatar src={user.avatarUrl} name={user.username} size="sm" />
-              </div>
+              </Link>
             ) : null}
           </div>
 
@@ -65,13 +78,35 @@ export function PageShell() {
           <div className="flex items-center gap-2">
             {isAuthenticated && user ? (
               <>
-                <div className="hidden items-center gap-2 lg:flex">
+                <Link
+                  className="hidden items-center gap-2 rounded px-2 py-1 transition hover:bg-white/10 lg:flex"
+                  to="/settings"
+                  onClick={() => setIsConfirmingLogout(false)}
+                >
                   <Avatar src={user.avatarUrl} name={user.username} size="sm" />
-                  <span className="max-w-32 truncate text-sm text-slate-300">{user.username}</span>
-                </div>
-                <Button variant="secondary" onClick={handleLogout}>
-                  Logout
-                </Button>
+                  <span className="max-w-32 truncate text-sm text-zinc-300">{user.username}</span>
+                </Link>
+                {isConfirmingLogout ? (
+                  <div className="flex items-center gap-2">
+                    <span className="hidden text-sm font-semibold text-zinc-300 sm:inline">
+                      Confermi?
+                    </span>
+                    <Button variant="danger" isLoading={isLoggingOut} onClick={handleLogout}>
+                      Ok
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      disabled={isLoggingOut}
+                      onClick={() => setIsConfirmingLogout(false)}
+                    >
+                      No
+                    </Button>
+                  </div>
+                ) : (
+                  <Button variant="secondary" onClick={() => setIsConfirmingLogout(true)}>
+                    Logout
+                  </Button>
+                )}
               </>
             ) : (
               <>

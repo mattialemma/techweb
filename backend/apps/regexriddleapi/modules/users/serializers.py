@@ -61,24 +61,63 @@ def validate_password_complexity(value: str) -> None:
 
 
 class RegisterUserSerializer(serializers.Serializer):
-    username = serializers.CharField(max_length=USERNAME_MAX_LENGTH)
-    email = serializers.EmailField(max_length=EMAIL_MAX_LENGTH)
-    password = serializers.CharField(write_only=True, min_length=8, max_length=PASSWORD_MAX_LENGTH)
-    firstName = serializers.CharField(max_length=NAME_MAX_LENGTH)
-    lastName = serializers.CharField(max_length=NAME_MAX_LENGTH)
+    username = serializers.CharField(
+        max_length=USERNAME_MAX_LENGTH,
+        error_messages={
+            "blank": "Username obbligatorio.",
+            "max_length": f"Massimo {USERNAME_MAX_LENGTH} caratteri.",
+            "required": "Username obbligatorio.",
+        },
+    )
+    email = serializers.EmailField(
+        max_length=EMAIL_MAX_LENGTH,
+        error_messages={
+            "blank": "Email obbligatoria.",
+            "invalid": "Inserisci un'email valida.",
+            "max_length": f"Massimo {EMAIL_MAX_LENGTH} caratteri.",
+            "required": "Email obbligatoria.",
+        },
+    )
+    password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        max_length=PASSWORD_MAX_LENGTH,
+        error_messages={
+            "blank": "Password obbligatoria.",
+            "max_length": f"Massimo {PASSWORD_MAX_LENGTH} caratteri.",
+            "min_length": "La password deve avere almeno 8 caratteri.",
+            "required": "Password obbligatoria.",
+        },
+    )
+    firstName = serializers.CharField(
+        max_length=NAME_MAX_LENGTH,
+        error_messages={
+            "blank": "Nome obbligatorio.",
+            "max_length": f"Massimo {NAME_MAX_LENGTH} caratteri.",
+            "required": "Nome obbligatorio.",
+        },
+    )
+    lastName = serializers.CharField(
+        max_length=NAME_MAX_LENGTH,
+        error_messages={
+            "blank": "Cognome obbligatorio.",
+            "max_length": f"Massimo {NAME_MAX_LENGTH} caratteri.",
+            "required": "Cognome obbligatorio.",
+        },
+    )
 
     def validate_username(self, value: str) -> str:
         username = value.strip()
         if not username:
-            raise serializers.ValidationError("Username is required.")
+            raise serializers.ValidationError("Username obbligatorio.")
         if User.objects.filter(username__iexact=username).exists():
-            raise serializers.ValidationError("Username already exists.")
+            raise serializers.ValidationError("Username gia in uso.")
         return username
 
     def validate_email(self, value: str) -> str:
         email = value.strip().lower()
         if email_exists(email):
-            raise serializers.ValidationError("Email already exists.")
+            raise serializers.ValidationError("Email gia in uso.")
         return email
 
     def validate_password(self, value: str) -> str:

@@ -6,6 +6,8 @@ import { parseApiFieldErrors } from "@shared/api";
 import { VALIDATION_LIMITS } from "@shared/lib/validation";
 import { AuthCard, Button, FormField, InlineMessage, Input, PasswordInput } from "@shared/ui";
 
+type RegisterField = keyof RegisterPayload;
+
 export function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -19,6 +21,16 @@ export function RegisterPage() {
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  function updateField(field: RegisterField, value: string) {
+    setValues((current) => ({ ...current, [field]: value }));
+    setErrors((current) => {
+      const remainingErrors = { ...current };
+      delete remainingErrors[field];
+      return remainingErrors;
+    });
+    setSubmitError("");
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -55,7 +67,7 @@ export function RegisterPage() {
             autoComplete="username"
             maxLength={VALIDATION_LIMITS.username}
             value={values.username}
-            onChange={(event) => setValues({ ...values, username: event.target.value })}
+            onChange={(event) => updateField("username", event.target.value)}
           />
         </FormField>
         <FormField label="Email" error={errors.email}>
@@ -64,7 +76,7 @@ export function RegisterPage() {
             inputMode="email"
             maxLength={VALIDATION_LIMITS.email}
             value={values.email}
-            onChange={(event) => setValues({ ...values, email: event.target.value })}
+            onChange={(event) => updateField("email", event.target.value)}
           />
         </FormField>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -73,7 +85,7 @@ export function RegisterPage() {
               autoComplete="given-name"
               maxLength={VALIDATION_LIMITS.name}
               value={values.firstName}
-              onChange={(event) => setValues({ ...values, firstName: event.target.value })}
+              onChange={(event) => updateField("firstName", event.target.value)}
             />
           </FormField>
           <FormField label="Cognome" error={errors.lastName}>
@@ -81,7 +93,7 @@ export function RegisterPage() {
               autoComplete="family-name"
               maxLength={VALIDATION_LIMITS.name}
               value={values.lastName}
-              onChange={(event) => setValues({ ...values, lastName: event.target.value })}
+              onChange={(event) => updateField("lastName", event.target.value)}
             />
           </FormField>
         </div>
@@ -90,7 +102,7 @@ export function RegisterPage() {
             autoComplete="new-password"
             maxLength={VALIDATION_LIMITS.password}
             value={values.password}
-            onChange={(event) => setValues({ ...values, password: event.target.value })}
+            onChange={(event) => updateField("password", event.target.value)}
           />
         </FormField>
         <Button type="submit" isLoading={isSubmitting} className="w-full">

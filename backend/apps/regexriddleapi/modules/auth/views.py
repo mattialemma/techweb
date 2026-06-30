@@ -119,10 +119,8 @@ class RefreshView(APIView):
     def post(self, request):
         refresh_token = request.COOKIES.get(settings.AUTH_REFRESH_COOKIE_NAME)
         if not refresh_token:
-            return Response(
-                {"detail": "Refresh token missing"},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
+            # No cookie means the browser has no active session yet; keep app boot quiet.
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         serializer = TokenRefreshSerializer(data={"refresh": refresh_token})
         try:

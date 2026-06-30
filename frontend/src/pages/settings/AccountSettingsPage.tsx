@@ -18,12 +18,12 @@ import { parseApiFieldErrors } from "@shared/api";
 import { VALIDATION_LIMITS } from "@shared/lib/validation";
 import {
   Avatar,
+  AppPage,
   Button,
   FileInput,
   FormField,
   InlineMessage,
   Input,
-  PageHeader,
   Panel,
   PasswordInput,
 } from "@shared/ui";
@@ -114,9 +114,7 @@ export function AccountSettingsPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
-      <PageHeader eyebrow="Account" title="Impostazioni profilo" />
-
+    <AppPage eyebrow="Account" title="Impostazioni profilo">
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
         <Panel as="aside">
           <Avatar src={user?.avatarUrl} name={user?.username} size="lg" />
@@ -242,6 +240,6 @@ export function AccountSettingsPage() {
           </Panel>
         </div>
       </div>
-    </main>
+    </AppPage>
   );
 }

@@ -24,6 +24,11 @@ from .services import create_attempt_for_challenge
 User = get_user_model()
 
 
+def challenge_ordering_for_request(request) -> list[str]:
+    ordering = request.query_params.get("ordering", "newest")
+    return ["created_at", "id"] if ordering == "oldest" else ["-created_at", "-id"]
+
+
 class ChallengeListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -32,7 +37,7 @@ class ChallengeListCreateView(APIView):
         challenges = (
             Challenge.objects.filter(is_published=True)
             .select_related("author", "author__profile")
-            .order_by("-created_at")
+            .order_by(*challenge_ordering_for_request(request))
         )
         paginator = DefaultPageNumberPagination()
         page = paginator.paginate_queryset(challenges, request, view=self)

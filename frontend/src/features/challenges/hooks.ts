@@ -8,17 +8,19 @@ import {
   listChallenges,
   listMyAttempts,
 } from "./api";
+import type { ChallengeOrdering } from "./types";
 
-export const challengesQueryKey = (page: number) => ["challenges", page] as const;
+export const challengesQueryKey = (page: number, ordering: ChallengeOrdering) =>
+  ["challenges", page, ordering] as const;
 export const challengeQueryKey = (challengeId: string) => ["challenges", challengeId] as const;
 export const challengeAttemptsQueryKey = (challengeId: string) =>
   ["challenges", challengeId, "attempts", "me"] as const;
 export const leaderboardQueryKey = (page: number) => ["leaderboard", page] as const;
 
-export function useChallenges(page = 1) {
+export function useChallenges(page = 1, ordering: ChallengeOrdering = "newest") {
   return useQuery({
-    queryKey: challengesQueryKey(page),
-    queryFn: () => listChallenges(page),
+    queryKey: challengesQueryKey(page, ordering),
+    queryFn: () => listChallenges(page, ordering),
   });
 }
 

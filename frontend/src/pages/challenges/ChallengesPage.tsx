@@ -1,31 +1,51 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { ChallengeCard, useChallenges } from "@features/challenges";
-import { Button, InlineMessage, PageHeader, Panel } from "@shared/ui";
+import { ChallengeCard, useChallenges, type ChallengeOrdering } from "@features/challenges";
+import { AppPage, Button, InlineMessage, Panel } from "@shared/ui";
 
 export function ChallengesPage() {
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError } = useChallenges(page);
+  const [ordering, setOrdering] = useState<ChallengeOrdering>("newest");
+  const { data, isLoading, isError } = useChallenges(page, ordering);
   const challenges = data?.results ?? [];
 
+  function handleOrderingChange(nextOrdering: ChallengeOrdering) {
+    setOrdering(nextOrdering);
+    setPage(1);
+  }
+
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
-      <PageHeader
-        eyebrow="Sfide"
-        title="Regex riddle pubblicati"
+    <AppPage
+        eyebrow="Enigmi"
+        title="Enigmi pubblicati"
         description="Consulta gli enigmi disponibili. Le regex segrete e i controlli restano nascosti."
         actions={
           <Link to="/challenges/new">
             <Button className="w-full sm:w-auto">Nuova sfida</Button>
           </Link>
         }
-      />
+    >
 
       <section>
-        {isLoading ? <InlineMessage>Caricamento sfide...</InlineMessage> : null}
+        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-zinc-400">Ordina gli enigmi per data di pubblicazione.</p>
+          <label className="flex items-center gap-3 text-sm font-semibold text-zinc-200">
+            <span>Ordina</span>
+            <select
+              className="min-h-10 rounded border border-white/10 bg-zinc-950/70 px-3 py-2 text-sm text-white outline-none transition hover:border-white/20 focus:border-lime-300 focus:ring-2 focus:ring-lime-300/20"
+              value={ordering}
+              onChange={(event) => handleOrderingChange(event.target.value as ChallengeOrdering)}
+            >
+              <option value="newest">Piu nuove</option>
+              <option value="oldest">Piu vecchie</option>
+            </select>
+          </label>
+        </div>
+
+        {isLoading ? <InlineMessage>Caricamento enigmi...</InlineMessage> : null}
         {isError ? (
-          <InlineMessage tone="error">Non riesco a caricare le sfide in questo momento.</InlineMessage>
+          <InlineMessage tone="error">Non riesco a caricare gli enigmi in questo momento.</InlineMessage>
         ) : null}
         {!isLoading && !isError && challenges.length === 0 ? (
           <Panel as="div" padding="lg">
@@ -45,7 +65,7 @@ export function ChallengesPage() {
         {!isLoading && !isError && data && data.count > challenges.length ? (
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-slate-400">
-              Pagina {page} - {data.count} sfide totali
+              Pagina {page} - {data.count} enigmi totali
             </p>
             <div className="flex gap-2">
               <Button
@@ -66,6 +86,6 @@ export function ChallengesPage() {
           </div>
         ) : null}
       </section>
-    </main>
+    </AppPage>
   );
 }

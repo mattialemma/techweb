@@ -17,6 +17,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshAccessToken()
       .then((token) => {
         if (!active) return;
+        if (!token) {
+          clearAccessToken();
+          setHasToken(false);
+          return;
+        }
         setAccessToken(token);
         setHasToken(true);
       })

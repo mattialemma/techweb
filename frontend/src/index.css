@@ -4,9 +4,9 @@
 
 :root {
   color: #f7f7f2;
-  background: #0c1016;
+  background: #11100d;
   font-family:
-    "IBM Plex Sans", Aptos, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Inter", "IBM Plex Sans", Aptos, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
   font-synthesis: none;
   text-rendering: geometricPrecision;
@@ -17,12 +17,16 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    linear-gradient(rgba(18, 26, 36, 0.76) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(18, 26, 36, 0.76) 1px, transparent 1px),
-    linear-gradient(135deg, #0b0f15 0%, #101720 45%, #0d1412 100%);
+    radial-gradient(circle at top left, rgba(190, 242, 100, 0.14), transparent 28rem),
+    radial-gradient(circle at bottom right, rgba(217, 70, 239, 0.1), transparent 30rem),
+    linear-gradient(rgba(63, 63, 70, 0.32) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(63, 63, 70, 0.32) 1px, transparent 1px),
+    linear-gradient(145deg, #11100d 0%, #181713 48%, #0c0c0a 100%);
   background-size:
-    44px 44px,
-    44px 44px,
+    auto,
+    auto,
+    36px 36px,
+    36px 36px,
     auto;
 }
 
@@ -38,13 +42,25 @@ body,
 }
 
 ::selection {
-  background: rgba(52, 211, 153, 0.28);
+  background: rgba(190, 242, 100, 0.28);
   color: #f8fafc;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff;
+  caret-color: #fff;
+  box-shadow: 0 0 0 1000px rgba(9, 9, 11, 0.94) inset;
+  transition: background-color 9999s ease-in-out 0s;
 }
 
 /* User-generated text can contain long tokens without spaces; keep pages from widening. */

@@ -9,9 +9,9 @@ type FormFieldProps = {
 export function FormField({ label, error, children }: FormFieldProps) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-medium text-slate-200">{label}</span>
+      <span className="mb-2 block text-sm font-semibold text-zinc-200">{label}</span>
       {children}
-      {error ? <span className="mt-2 block text-sm text-red-300">{error}</span> : null}
+      {error ? <span className="mt-2 block text-sm text-rose-300">{error}</span> : null}
     </label>
   );
 }

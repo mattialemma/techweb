@@ -2,15 +2,19 @@ import apiClient from "@shared/api/client";
 import type {
   Attempt,
   Challenge,
+  ChallengeOrdering,
   CreateAttemptPayload,
   CreateChallengePayload,
   LeaderboardEntry,
   PaginatedResponse,
 } from "./types";
 
-export async function listChallenges(page = 1): Promise<PaginatedResponse<Challenge>> {
+export async function listChallenges(
+  page = 1,
+  ordering: ChallengeOrdering = "newest",
+): Promise<PaginatedResponse<Challenge>> {
   const { data } = await apiClient.get<PaginatedResponse<Challenge>>("/challenges", {
-    params: { page },
+    params: { ordering, page },
   });
   return data;
 }

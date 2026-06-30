@@ -24,7 +24,7 @@ export function PasswordInput({ className = "", disabled, ...props }: PasswordIn
       />
       <button
         aria-label={isVisible ? "Nascondi password" : "Mostra password"}
-        className="absolute inset-y-1 right-1 flex w-9 items-center justify-center rounded-md text-slate-400 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-300/30 disabled:cursor-not-allowed disabled:opacity-40"
+        className="absolute inset-y-1 right-1 flex w-9 items-center justify-center rounded text-zinc-400 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-lime-300/30 disabled:cursor-not-allowed disabled:opacity-40"
         disabled={disabled}
         onClick={() => setIsVisible((current) => !current)}
         type="button"

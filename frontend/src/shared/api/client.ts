@@ -68,12 +68,16 @@ async function refreshAccessToken(): Promise<string> {
   if (!refreshPromise) {
     const token = await ensureCsrfToken();
     refreshPromise = refreshClient
-      .post<{ accessToken: string }>(
+      .post<{ accessToken?: string }>(
         "/sessions/current/access-token",
         {},
         { headers: { "X-CSRFToken": token } },
       )
-      .then(({ data }) => {
+      .then(({ data, status }) => {
+        if (status === 204 || !data.accessToken) {
+          clearAccessToken();
+          throw new Error("No refresh session available.");
+        }
         setAccessToken(data.accessToken);
         return data.accessToken;
       })

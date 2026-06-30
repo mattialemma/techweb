@@ -17,9 +17,11 @@ export async function loginUser(payload: LoginPayload): Promise<LoginResponse> {
   return data;
 }
 
-export async function refreshAccessToken(): Promise<string> {
-  const { data } = await apiClient.post<{ accessToken: string }>("/sessions/current/access-token");
-  return data.accessToken;
+export async function refreshAccessToken(): Promise<string | null> {
+  const { data, status } = await apiClient.post<{ accessToken?: string }>(
+    "/sessions/current/access-token",
+  );
+  return status === 204 ? null : data.accessToken ?? null;
 }
 
 export async function logoutUser(): Promise<void> {

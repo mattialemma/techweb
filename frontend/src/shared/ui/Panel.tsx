@@ -28,7 +28,7 @@ export function Panel({
   ...props
 }: PanelProps) {
   const classes = [
-    "min-w-0 rounded-lg border border-white/10 bg-slate-950/45 shadow-2xl shadow-black/20 backdrop-blur",
+    "min-w-0 rounded-lg border border-white/10 bg-zinc-950/48 shadow-2xl shadow-black/25 backdrop-blur",
     paddingClass[padding],
     className,
   ]
