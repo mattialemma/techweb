@@ -1,8 +1,18 @@
+"""Authentication and password recovery API views.
+
+Owns session creation, JWT refresh-cookie handling, logout, CSRF token exposure,
+and OTP-based password reset entrypoints.
+"""
+
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.middleware.csrf import get_token
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_protect
+from drf_spectacular.utils import extend_schema
 from rest_framework import permissions, status
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -12,9 +22,14 @@ from ..users.serializers import UserReadSerializer
 from .password_reset import password_reset_service
 from .serializers import (
     LoginSerializer,
+    LoginResponseSerializer,
+    DetailResponseSerializer,
+    CSRFTokenResponseSerializer,
     PasswordOTPRequestSerializer,
+    PasswordOTPVerifyResponseSerializer,
     PasswordOTPVerifySerializer,
     PasswordResetSerializer,
+    RefreshResponseSerializer,
 )
 
 User = get_user_model()
@@ -45,14 +60,23 @@ class CSRFTokenView(APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
 
+    @extend_schema(operation_id="csrf_token_retrieve", responses=CSRFTokenResponseSerializer)
     def get(self, request):
         return Response({"csrfToken": get_token(request)})
 
 
+@method_decorator(csrf_protect, name="dispatch")
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "login"
 
+    @extend_schema(
+        operation_id="sessions_create",
+        request=LoginSerializer,
+        responses=LoginResponseSerializer,
+    )
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -80,10 +104,18 @@ class LoginView(APIView):
         return response
 
 
+@method_decorator(csrf_protect, name="dispatch")
 class RefreshView(APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "token_refresh"
 
+    @extend_schema(
+        operation_id="sessions_access_token_create",
+        request=None,
+        responses=RefreshResponseSerializer,
+    )
     def post(self, request):
         refresh_token = request.COOKIES.get(settings.AUTH_REFRESH_COOKIE_NAME)
         if not refresh_token:
@@ -108,9 +140,13 @@ class RefreshView(APIView):
         return response
 
 
+@method_decorator(csrf_protect, name="dispatch")
 class LogoutView(APIView):
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "logout"
 
+    @extend_schema(operation_id="sessions_current_destroy", responses=None)
     def delete(self, request):
         refresh_token = request.COOKIES.get(settings.AUTH_REFRESH_COOKIE_NAME)
         if refresh_token:
@@ -126,7 +162,14 @@ class LogoutView(APIView):
 class PasswordOTPRequestView(APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "password_reset_request"
 
+    @extend_schema(
+        operation_id="password_reset_requests_create",
+        request=PasswordOTPRequestSerializer,
+        responses=DetailResponseSerializer,
+    )
     def post(self, request):
         serializer = PasswordOTPRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -137,7 +180,14 @@ class PasswordOTPRequestView(APIView):
 class PasswordOTPVerifyView(APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "password_reset_verify"
 
+    @extend_schema(
+        operation_id="password_reset_verifications_create",
+        request=PasswordOTPVerifySerializer,
+        responses=PasswordOTPVerifyResponseSerializer,
+    )
     def post(self, request):
         serializer = PasswordOTPVerifySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -153,7 +203,14 @@ class PasswordOTPVerifyView(APIView):
 class PasswordResetView(APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "password_reset_apply"
 
+    @extend_schema(
+        operation_id="password_resets_create",
+        request=PasswordResetSerializer,
+        responses=DetailResponseSerializer,
+    )
     def post(self, request):
         serializer = PasswordResetSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

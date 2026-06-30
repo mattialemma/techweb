@@ -1,3 +1,8 @@
+"""Serializers and validators for user account API payloads.
+
+Owns public user DTOs, registration/update validation, passwords, and avatar upload checks.
+"""
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
@@ -27,7 +32,7 @@ def user_avatar_url(user, request=None) -> str | None:
 
 
 class UserReadSerializer(serializers.ModelSerializer):
-    userId = serializers.IntegerField(source="id", read_only=True)
+    userId = serializers.UUIDField(source="profile.public_id", read_only=True)
     firstName = serializers.CharField(source="first_name", read_only=True)
     lastName = serializers.CharField(source="last_name", read_only=True)
     avatarUrl = serializers.SerializerMethodField()
@@ -36,7 +41,7 @@ class UserReadSerializer(serializers.ModelSerializer):
         model = User
         fields = ("userId", "username", "email", "firstName", "lastName", "avatarUrl")
 
-    def get_avatarUrl(self, user):
+    def get_avatarUrl(self, user) -> str | None:
         return user_avatar_url(user, self.context.get("request"))
 
 
@@ -139,6 +144,7 @@ class UpdateCurrentUserSerializer(serializers.Serializer):
         return last_name
 
     def update(self, instance, validated_data):
+        update_fields = []
         for input_name, model_name in (
             ("username", "username"),
             ("email", "email"),
@@ -147,7 +153,9 @@ class UpdateCurrentUserSerializer(serializers.Serializer):
         ):
             if input_name in validated_data:
                 setattr(instance, model_name, validated_data[input_name])
-        instance.save(update_fields=["username", "email", "first_name", "last_name"])
+                update_fields.append(model_name)
+        if update_fields:
+            instance.save(update_fields=update_fields)
         return instance
 
 
@@ -182,4 +190,11 @@ class AvatarUploadSerializer(serializers.Serializer):
     def validate_avatar(self, value):
         if value.size > settings.AVATAR_MAX_UPLOAD_SIZE:
             raise serializers.ValidationError("Avatar must be at most 2 MB.")
+        image = getattr(value, "image", None)
+        if image is None:
+            raise serializers.ValidationError("Avatar must be a valid image.")
+        if image.format not in settings.AVATAR_ALLOWED_FORMATS:
+            raise serializers.ValidationError("Avatar format must be JPEG, PNG, or WEBP.")
+        if max(image.size) > settings.AVATAR_MAX_DIMENSION:
+            raise serializers.ValidationError("Avatar dimensions must be at most 1024x1024 pixels.")
         return value

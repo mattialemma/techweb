@@ -1,11 +1,18 @@
+export type PaginatedResponse<T> = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+};
+
 export type ChallengeAuthor = {
-  userId: number;
+  userId: string;
   username: string;
   avatarUrl: string | null;
 };
 
 export type Challenge = {
-  challengeId: number;
+  challengeId: string;
   title: string;
   description: string;
   author: ChallengeAuthor;
@@ -26,7 +33,7 @@ export type CreateChallengePayload = {
 
 export type Attempt = {
   attemptId: number;
-  challengeId: number;
+  challengeId: string;
   proposedRegex: string;
   positiveMatched: number;
   negativeMatched: number;
@@ -38,13 +45,13 @@ export type Attempt = {
 };
 
 export type CreateAttemptPayload = {
-  challengeId: number;
+  challengeId: string;
   proposedRegex: string;
 };
 
 export type LeaderboardEntry = {
   rank: number;
-  userId: number;
+  userId: string;
   username: string;
   firstName: string;
   lastName: string;

@@ -1,28 +1,45 @@
-import re
+"""Domain services for validating challenges and scoring regex attempts.
+
+Owns regex compilation/matching, challenge rule validation, and attempt creation.
+"""
+
 from collections.abc import Iterable
 
+import regex
+from django.conf import settings
 from django.db import transaction
 from rest_framework import serializers
 
 from .models import Attempt, Challenge, ControlStringKind
 
 
-def compile_regex(pattern: str) -> re.Pattern[str]:
+def compile_regex(pattern: str) -> regex.Pattern:
     try:
-        return re.compile(pattern)
-    except re.error as exc:
+        return regex.compile(pattern)
+    except regex.error as exc:
         raise serializers.ValidationError({"secretRegex": f"Regex non valida: {exc}"}) from exc
 
 
-def compile_proposed_regex(pattern: str) -> re.Pattern[str]:
+def compile_proposed_regex(pattern: str) -> regex.Pattern:
     try:
-        return re.compile(pattern)
-    except re.error as exc:
+        return regex.compile(pattern)
+    except regex.error as exc:
         raise serializers.ValidationError({"proposedRegex": f"Regex non valida: {exc}"}) from exc
 
 
-def regex_fullmatches(compiled_regex: re.Pattern[str], value: str) -> bool:
-    return compiled_regex.fullmatch(value) is not None
+def regex_fullmatches(compiled_regex: regex.Pattern, value: str) -> bool:
+    try:
+        return (
+            compiled_regex.fullmatch(
+                value,
+                timeout=settings.CHALLENGE_REGEX_TIMEOUT_SECONDS,
+            )
+            is not None
+        )
+    except TimeoutError as exc:
+        raise serializers.ValidationError(
+            {"detail": "Regex troppo complessa: la valutazione ha superato il limite di tempo."}
+        ) from exc
 
 
 def validate_control_count(values: Iterable[str], *, field_name: str) -> list[str]:

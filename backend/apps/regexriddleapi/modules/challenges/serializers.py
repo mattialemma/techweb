@@ -7,16 +7,16 @@ from .services import validate_challenge_regex_rules
 
 
 class AuthorSummarySerializer(serializers.Serializer):
-    userId = serializers.IntegerField(source="id")
+    userId = serializers.UUIDField(source="profile.public_id")
     username = serializers.CharField()
     avatarUrl = serializers.SerializerMethodField()
 
-    def get_avatarUrl(self, user):
+    def get_avatarUrl(self, user) -> str | None:
         return user_avatar_url(user, self.context.get("request"))
 
 
 class ChallengeReadSerializer(serializers.ModelSerializer):
-    challengeId = serializers.IntegerField(source="id", read_only=True)
+    challengeId = serializers.UUIDField(source="public_id", read_only=True)
     author = AuthorSummarySerializer(read_only=True)
     positiveExample = serializers.CharField(source="positive_example", read_only=True)
     negativeExample = serializers.CharField(source="negative_example", read_only=True)
@@ -111,7 +111,7 @@ class AttemptCreateSerializer(serializers.Serializer):
 
 class AttemptReadSerializer(serializers.ModelSerializer):
     attemptId = serializers.IntegerField(source="id", read_only=True)
-    challengeId = serializers.IntegerField(source="challenge_id", read_only=True)
+    challengeId = serializers.UUIDField(source="challenge.public_id", read_only=True)
     proposedRegex = serializers.CharField(source="proposed_regex", read_only=True)
     positiveMatched = serializers.IntegerField(source="positive_matched", read_only=True)
     negativeMatched = serializers.IntegerField(source="negative_matched", read_only=True)
@@ -138,7 +138,7 @@ class AttemptReadSerializer(serializers.ModelSerializer):
 
 class LeaderboardEntrySerializer(serializers.Serializer):
     rank = serializers.IntegerField()
-    userId = serializers.IntegerField()
+    userId = serializers.UUIDField()
     username = serializers.CharField()
     firstName = serializers.CharField()
     lastName = serializers.CharField()

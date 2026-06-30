@@ -1,5 +1,7 @@
+import { useState } from "react";
+
 import { useLeaderboard } from "@features/challenges";
-import { Avatar, InlineMessage, PageHeader, Panel } from "@shared/ui";
+import { Avatar, Button, InlineMessage, PageHeader, Panel } from "@shared/ui";
 
 function formatAverage(value: number): string {
   return new Intl.NumberFormat("it-IT", {
@@ -13,7 +15,9 @@ function formatFullName(entry: { firstName: string; lastName: string; username: 
 }
 
 export function LeaderboardPage() {
-  const { data: entries = [], isLoading, isError } = useLeaderboard();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError } = useLeaderboard(page);
+  const entries = data?.results ?? [];
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
@@ -79,6 +83,30 @@ export function LeaderboardPage() {
             })}
           </div>
         </Panel>
+      ) : null}
+
+      {!isLoading && !isError && data && data.count > entries.length ? (
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-slate-400">
+            Pagina {page} - {data.count} solver totali
+          </p>
+          <div className="flex gap-2">
+            <Button
+              disabled={!data.previous}
+              variant="secondary"
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+            >
+              Precedente
+            </Button>
+            <Button
+              disabled={!data.next}
+              variant="secondary"
+              onClick={() => setPage((current) => current + 1)}
+            >
+              Successiva
+            </Button>
+          </div>
+        </div>
       ) : null}
     </main>
   );

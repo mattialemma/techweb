@@ -2,19 +2,22 @@ from io import BytesIO
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import IntegrityError, transaction
 from django.test import override_settings
 from PIL import Image
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APIClient, APITestCase
+from rest_framework.throttling import ScopedRateThrottle
 
 from apps.regexriddleapi.modules.users.models import UserProfile
 
 User = get_user_model()
 
 
-def make_png(name: str = "avatar.png") -> SimpleUploadedFile:
-    image = Image.new("RGB", (4, 4), color="green")
+def make_png(name: str = "avatar.png", size: tuple[int, int] = (4, 4)) -> SimpleUploadedFile:
+    image = Image.new("RGB", size, color="green")
     buffer = BytesIO()
     image.save(buffer, format="PNG")
     return SimpleUploadedFile(name, buffer.getvalue(), content_type="image/png")
@@ -89,6 +92,20 @@ class AuthUsersApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("email", response.data)
 
+    def test_database_rejects_duplicate_email_case_insensitive(self):
+        User.objects.create_user(
+            username="first",
+            email="mattia@example.com",
+            password="StrongPass123!",
+        )
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            User.objects.create_user(
+                username="second",
+                email="MATTIA@example.com",
+                password="StrongPass123!",
+            )
+
     def test_login_returns_access_token_and_refresh_cookie(self):
         user, password = self.create_user()
 
@@ -100,9 +117,29 @@ class AuthUsersApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("accessToken", response.data)
-        self.assertEqual(response.data["user"]["userId"], user.id)
+        self.assertEqual(response.data["user"]["userId"], str(user.profile.public_id))
         self.assertIn(settings.AUTH_REFRESH_COOKIE_NAME, response.cookies)
         self.assertTrue(response.cookies[settings.AUTH_REFRESH_COOKIE_NAME]["httponly"])
+
+    def test_login_requires_csrf_when_checks_are_enforced(self):
+        user, password = self.create_user()
+        csrf_client = APIClient(enforce_csrf_checks=True)
+
+        missing_response = csrf_client.post(
+            "/api/sessions",
+            {"email": user.email, "password": password},
+            format="json",
+        )
+        token_response = csrf_client.get("/api/security/csrf-token")
+        protected_response = csrf_client.post(
+            "/api/sessions",
+            {"email": user.email, "password": password},
+            HTTP_X_CSRFTOKEN=token_response.data["csrfToken"],
+            format="json",
+        )
+
+        self.assertEqual(missing_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(protected_response.status_code, status.HTTP_200_OK)
 
     def test_login_rejects_bad_credentials(self):
         user, _ = self.create_user()
@@ -116,6 +153,24 @@ class AuthUsersApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data["detail"], "Credenziali non valide.")
 
+    def test_login_is_rate_limited(self):
+        original_rates = ScopedRateThrottle.THROTTLE_RATES
+        ScopedRateThrottle.THROTTLE_RATES = {"login": "2/min"}
+        cache.clear()
+        try:
+            payload = {"email": "missing@example.com", "password": "WrongPass123!"}
+
+            first_response = self.client.post("/api/sessions", payload, format="json")
+            second_response = self.client.post("/api/sessions", payload, format="json")
+            throttled_response = self.client.post("/api/sessions", payload, format="json")
+        finally:
+            ScopedRateThrottle.THROTTLE_RATES = original_rates
+            cache.clear()
+
+        self.assertEqual(first_response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(second_response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(throttled_response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
     def test_refresh_access_token_uses_cookie(self):
         _, login_response = self.authenticate()
         refresh_cookie = login_response.cookies[settings.AUTH_REFRESH_COOKIE_NAME].value
@@ -125,6 +180,30 @@ class AuthUsersApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("accessToken", response.data)
+
+    def test_refresh_requires_csrf_when_checks_are_enforced(self):
+        user, password = self.create_user()
+        csrf_client = APIClient(enforce_csrf_checks=True)
+        token_response = csrf_client.get("/api/security/csrf-token")
+        login_response = csrf_client.post(
+            "/api/sessions",
+            {"email": user.email, "password": password},
+            HTTP_X_CSRFTOKEN=token_response.data["csrfToken"],
+            format="json",
+        )
+        refresh_cookie = login_response.cookies[settings.AUTH_REFRESH_COOKIE_NAME].value
+        csrf_client.cookies[settings.AUTH_REFRESH_COOKIE_NAME] = refresh_cookie
+
+        missing_response = csrf_client.post("/api/sessions/current/access-token", {}, format="json")
+        protected_response = csrf_client.post(
+            "/api/sessions/current/access-token",
+            {},
+            HTTP_X_CSRFTOKEN=token_response.data["csrfToken"],
+            format="json",
+        )
+
+        self.assertEqual(missing_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(protected_response.status_code, status.HTTP_200_OK)
 
     def test_logout_clears_refresh_cookie(self):
         _, login_response = self.authenticate()
@@ -206,6 +285,18 @@ class AuthUsersApiTests(APITestCase):
         response = self.client.put(
             "/api/users/me/avatar",
             {"avatar": upload},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("avatar", response.data)
+
+    def test_upload_avatar_rejects_large_dimensions(self):
+        self.authenticate()
+
+        response = self.client.put(
+            "/api/users/me/avatar",
+            {"avatar": make_png(size=(1025, 4))},
             format="multipart",
         )
 

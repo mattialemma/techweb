@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { ChallengeCard, useChallenges } from "@features/challenges";
 import { Button, InlineMessage, PageHeader, Panel } from "@shared/ui";
 
 export function ChallengesPage() {
-  const { data: challenges = [], isLoading, isError } = useChallenges();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError } = useChallenges(page);
+  const challenges = data?.results ?? [];
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
@@ -39,6 +42,29 @@ export function ChallengesPage() {
             <ChallengeCard key={challenge.challengeId} challenge={challenge} />
           ))}
         </div>
+        {!isLoading && !isError && data && data.count > challenges.length ? (
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-slate-400">
+              Pagina {page} - {data.count} sfide totali
+            </p>
+            <div className="flex gap-2">
+              <Button
+                disabled={!data.previous}
+                variant="secondary"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+              >
+                Precedente
+              </Button>
+              <Button
+                disabled={!data.next}
+                variant="secondary"
+                onClick={() => setPage((current) => current + 1)}
+              >
+                Successiva
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </section>
     </main>
   );

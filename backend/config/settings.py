@@ -1,10 +1,18 @@
+"""Django settings for the REGEXRIDDLE backend.
+
+Owns environment-driven runtime configuration for API, auth, storage, and mail.
+"""
+
 import os
 from datetime import timedelta
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+# Parse boolean environment flags consistently across Docker and local shells.
 def env_flag(name: str, default: bool) -> bool:
     return os.getenv(name, str(default)).lower() in {"1", "true", "yes", "on"}
 
@@ -13,13 +21,24 @@ def csv_env(name: str, default: str = "") -> list[str]:
     return [item.strip() for item in os.getenv(name, default).split(",") if item.strip()]
 
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key-change-me-please-rotate")
 DEBUG = env_flag("DEBUG", True)
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured("DJANGO_SECRET_KEY is required when DEBUG=False.")
+    SECRET_KEY = "dev-secret-key-change-me-please-rotate"
+
 ALLOWED_HOSTS = csv_env("ALLOWED_HOSTS", "localhost,127.0.0.1,backend")
 AUTH_REFRESH_COOKIE_NAME = os.getenv("AUTH_REFRESH_COOKIE_NAME", "regexriddle_refresh")
 AUTH_REFRESH_COOKIE_PATH = os.getenv("AUTH_REFRESH_COOKIE_PATH", "/api/sessions/current")
 AUTH_REFRESH_COOKIE_SECURE = env_flag("AUTH_REFRESH_COOKIE_SECURE", not DEBUG)
 AUTH_REFRESH_COOKIE_SAMESITE = os.getenv("AUTH_REFRESH_COOKIE_SAMESITE", "Lax")
+SESSION_COOKIE_SECURE = env_flag("SESSION_COOKIE_SECURE", not DEBUG)
+CSRF_COOKIE_SECURE = env_flag("CSRF_COOKIE_SECURE", not DEBUG)
+SECURE_SSL_REDIRECT = env_flag("SECURE_SSL_REDIRECT", False)
+SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0"))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env_flag("SECURE_HSTS_INCLUDE_SUBDOMAINS", False)
+SECURE_HSTS_PRELOAD = env_flag("SECURE_HSTS_PRELOAD", False)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -90,13 +109,18 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = Path(os.getenv("STATIC_ROOT", BASE_DIR / "staticfiles"))
 MEDIA_URL = "/media/"
 # Keep development uploads in the repository root by default; Docker can override
 # this to the bind-mounted path where the backend process writes files.
 MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", BASE_DIR.parent / "media"))
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AVATAR_MAX_UPLOAD_SIZE = int(os.getenv("AVATAR_MAX_UPLOAD_SIZE", str(2 * 1024 * 1024)))
+AVATAR_MAX_DIMENSION = int(os.getenv("AVATAR_MAX_DIMENSION", "1024"))
+AVATAR_ALLOWED_FORMATS = csv_env("AVATAR_ALLOWED_FORMATS", "JPEG,PNG,WEBP")
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv("DATA_UPLOAD_MAX_MEMORY_SIZE", str(3 * 1024 * 1024)))
+FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv("FILE_UPLOAD_MAX_MEMORY_SIZE", str(3 * 1024 * 1024)))
+CHALLENGE_REGEX_TIMEOUT_SECONDS = float(os.getenv("CHALLENGE_REGEX_TIMEOUT_SECONDS", "0.05"))
 
 EMAIL_PROVIDER = os.getenv("EMAIL_PROVIDER", "console").lower()
 BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")
@@ -126,6 +150,17 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
+    "DEFAULT_THROTTLE_CLASSES": (
+        "rest_framework.throttling.ScopedRateThrottle",
+    ),
+    "DEFAULT_THROTTLE_RATES": {
+        "login": os.getenv("THROTTLE_LOGIN_RATE", "20/min"),
+        "token_refresh": os.getenv("THROTTLE_TOKEN_REFRESH_RATE", "60/min"),
+        "logout": os.getenv("THROTTLE_LOGOUT_RATE", "60/min"),
+        "password_reset_request": os.getenv("THROTTLE_PASSWORD_RESET_REQUEST_RATE", "10/hour"),
+        "password_reset_verify": os.getenv("THROTTLE_PASSWORD_RESET_VERIFY_RATE", "30/min"),
+        "password_reset_apply": os.getenv("THROTTLE_PASSWORD_RESET_APPLY_RATE", "10/min"),
+    },
 }
 
 SIMPLE_JWT = {

@@ -31,7 +31,7 @@ export function ChallengeDetailPage() {
   const params = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const challengeId = Number(params.challengeId);
+  const challengeId = params.challengeId ?? "";
   const { data: challenge, isLoading, isError } = useChallenge(challengeId);
   const { data: attempts = [], isLoading: attemptsLoading } = useMyChallengeAttempts(challengeId);
   const createAttempt = useCreateAttempt();
@@ -65,7 +65,7 @@ export function ChallengeDetailPage() {
     }
   }
 
-  if (!Number.isFinite(challengeId) || challengeId <= 0) {
+  if (!challengeId) {
     return (
       <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6">
         <InlineMessage tone="error">Sfida non valida.</InlineMessage>

@@ -39,3 +39,21 @@ Run database migrations:
 ```bash
 docker compose exec backend python manage.py migrate
 ```
+
+## Production-oriented stack
+
+Copy and fill the production environment template:
+
+```bash
+cp env/prod.example .env
+```
+
+Start the production-oriented stack:
+
+```bash
+docker compose -f docker-compose.prod.yml up --build -d
+```
+
+This stack runs Django behind Gunicorn, serves the built React app with nginx,
+collects Django static files, applies migrations, and exposes only the edge
+nginx service on `HTTP_PORT`.

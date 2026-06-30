@@ -58,6 +58,7 @@ class PasswordApiTests(APITestCase):
         otp = PasswordResetOTP.objects.get(user=user, is_used=False)
         code = self.latest_email_code()
         self.assertNotEqual(otp.code, code)
+        self.assertEqual(otp.code, PasswordResetOTP.hash_code(code))
         self.assertTrue(otp.matches_code(code))
 
     def test_request_password_otp_does_not_reveal_unknown_email(self):

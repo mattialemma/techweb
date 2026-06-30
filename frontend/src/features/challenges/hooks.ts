@@ -9,16 +9,16 @@ import {
   listMyAttempts,
 } from "./api";
 
-export const challengesQueryKey = ["challenges"] as const;
-export const challengeQueryKey = (challengeId: number) => ["challenges", challengeId] as const;
-export const challengeAttemptsQueryKey = (challengeId: number) =>
+export const challengesQueryKey = (page: number) => ["challenges", page] as const;
+export const challengeQueryKey = (challengeId: string) => ["challenges", challengeId] as const;
+export const challengeAttemptsQueryKey = (challengeId: string) =>
   ["challenges", challengeId, "attempts", "me"] as const;
-export const leaderboardQueryKey = ["leaderboard"] as const;
+export const leaderboardQueryKey = (page: number) => ["leaderboard", page] as const;
 
-export function useChallenges() {
+export function useChallenges(page = 1) {
   return useQuery({
-    queryKey: challengesQueryKey,
-    queryFn: listChallenges,
+    queryKey: challengesQueryKey(page),
+    queryFn: () => listChallenges(page),
   });
 }
 
@@ -27,24 +27,24 @@ export function useCreateChallenge() {
   return useMutation({
     mutationFn: createChallenge,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: challengesQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["challenges"] });
     },
   });
 }
 
-export function useChallenge(challengeId: number) {
+export function useChallenge(challengeId: string) {
   return useQuery({
     queryKey: challengeQueryKey(challengeId),
     queryFn: () => getChallenge(challengeId),
-    enabled: Number.isFinite(challengeId) && challengeId > 0,
+    enabled: challengeId.length > 0,
   });
 }
 
-export function useMyChallengeAttempts(challengeId: number) {
+export function useMyChallengeAttempts(challengeId: string) {
   return useQuery({
     queryKey: challengeAttemptsQueryKey(challengeId),
     queryFn: () => listMyAttempts(challengeId),
-    enabled: Number.isFinite(challengeId) && challengeId > 0,
+    enabled: challengeId.length > 0,
   });
 }
 
@@ -57,15 +57,15 @@ export function useCreateAttempt() {
         queryKey: challengeAttemptsQueryKey(attempt.challengeId),
       });
       if (attempt.solved) {
-        queryClient.invalidateQueries({ queryKey: leaderboardQueryKey });
+        queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
       }
     },
   });
 }
 
-export function useLeaderboard() {
+export function useLeaderboard(page = 1) {
   return useQuery({
-    queryKey: leaderboardQueryKey,
-    queryFn: getLeaderboard,
+    queryKey: leaderboardQueryKey(page),
+    queryFn: () => getLeaderboard(page),
   });
 }
