@@ -54,7 +54,7 @@ export function useCreateAttempt() {
     mutationFn: createAttempt,
     onSuccess: (attempt) => {
       queryClient.invalidateQueries({
-        queryKey: challengeAttemptsQueryKey(attempt.challengeId),
+        queryKey: challengeAttemptsQueryKey(String(attempt.challengeId)),
       });
       if (attempt.solved) {
         queryClient.invalidateQueries({ queryKey: ["leaderboard"] });

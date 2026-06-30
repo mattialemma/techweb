@@ -32,7 +32,7 @@ def user_avatar_url(user, request=None) -> str | None:
 
 
 class UserReadSerializer(serializers.ModelSerializer):
-    userId = serializers.UUIDField(source="profile.public_id", read_only=True)
+    userId = serializers.IntegerField(source="id", read_only=True)
     firstName = serializers.CharField(source="first_name", read_only=True)
     lastName = serializers.CharField(source="last_name", read_only=True)
     avatarUrl = serializers.SerializerMethodField()

@@ -11,14 +11,14 @@ from .views import (
 urlpatterns = [
     path("challenges", ChallengeListCreateView.as_view(), name="challenges-list-create"),
     path("leaderboard", LeaderboardView.as_view(), name="leaderboard"),
-    path("challenges/<uuid:challengeId>", ChallengeDetailView.as_view(), name="challenges-detail"),
+    path("challenges/<int:challengeId>", ChallengeDetailView.as_view(), name="challenges-detail"),
     path(
-        "challenges/<uuid:challengeId>/attempts",
+        "challenges/<int:challengeId>/attempts",
         ChallengeAttemptCreateView.as_view(),
         name="challenge-attempts-create",
     ),
     path(
-        "challenges/<uuid:challengeId>/attempts/me",
+        "challenges/<int:challengeId>/attempts/me",
         CurrentUserChallengeAttemptsView.as_view(),
         name="challenge-attempts-me",
     ),

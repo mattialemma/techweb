@@ -42,10 +42,10 @@ class LeaderboardApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["count"], 1)
-        self.assertEqual(response.data["results"][0]["challengeId"], str(Challenge.objects.get().public_id))
+        self.assertEqual(response.data["results"][0]["challengeId"], Challenge.objects.get().id)
         self.assertEqual(response.data["results"][0]["title"], "Codici")
 
-    def test_challenge_detail_uses_public_id(self):
+    def test_challenge_detail_uses_id(self):
         author = User.objects.create_user(
             username="author",
             email="author@example.com",
@@ -60,10 +60,10 @@ class LeaderboardApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=author)
-        response = self.client.get(f"/api/challenges/{challenge.public_id}")
+        response = self.client.get(f"/api/challenges/{challenge.id}")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["challengeId"], str(challenge.public_id))
+        self.assertEqual(response.data["challengeId"], challenge.id)
 
     def test_leaderboard_returns_solver_first_and_last_name(self):
         author = User.objects.create_user(

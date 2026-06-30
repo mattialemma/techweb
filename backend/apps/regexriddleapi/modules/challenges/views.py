@@ -63,7 +63,7 @@ class ChallengeDetailView(APIView):
     def get(self, request, challengeId):
         challenge = get_object_or_404(
             Challenge.objects.select_related("author", "author__profile"),
-            public_id=challengeId,
+            id=challengeId,
             is_published=True,
         )
         serializer = ChallengeReadSerializer(challenge, context={"request": request})
@@ -81,7 +81,7 @@ class ChallengeAttemptCreateView(APIView):
     def post(self, request, challengeId):
         challenge = get_object_or_404(
             Challenge.objects.prefetch_related("control_strings"),
-            public_id=challengeId,
+            id=challengeId,
             is_published=True,
         )
         serializer = AttemptCreateSerializer(data=request.data)
@@ -102,7 +102,7 @@ class CurrentUserChallengeAttemptsView(APIView):
         responses=AttemptReadSerializer(many=True),
     )
     def get(self, request, challengeId):
-        challenge = get_object_or_404(Challenge, public_id=challengeId, is_published=True)
+        challenge = get_object_or_404(Challenge, id=challengeId, is_published=True)
         attempts = challenge.attempts.filter(solver=request.user).order_by("-created_at")
         paginator = DefaultPageNumberPagination()
         page = paginator.paginate_queryset(attempts, request, view=self)
@@ -143,7 +143,7 @@ class LeaderboardView(APIView):
         response_data = [
             {
                 "rank": paginator.page.start_index() + index,
-                "userId": user.profile.public_id,
+                "userId": user.id,
                 "username": user.username,
                 "firstName": user.first_name,
                 "lastName": user.last_name,

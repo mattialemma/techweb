@@ -117,7 +117,7 @@ class AuthUsersApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("accessToken", response.data)
-        self.assertEqual(response.data["user"]["userId"], str(user.profile.public_id))
+        self.assertEqual(response.data["user"]["userId"], user.id)
         self.assertIn(settings.AUTH_REFRESH_COOKIE_NAME, response.cookies)
         self.assertTrue(response.cookies[settings.AUTH_REFRESH_COOKIE_NAME]["httponly"])
 

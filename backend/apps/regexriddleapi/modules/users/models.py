@@ -5,7 +5,6 @@ Exports profile storage and short-lived reset codes used by auth workflows.
 
 import hashlib
 import hmac
-import uuid
 from datetime import timedelta
 
 from django.conf import settings
@@ -14,7 +13,6 @@ from django.utils import timezone
 
 
 class UserProfile(models.Model):
-    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True)
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
