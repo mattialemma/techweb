@@ -1,10 +1,23 @@
-// FILE: attemptFormatters.ts
-// Purpose: Formats attempt feedback strings used by challenge detail components.
-// Layer: Feature utility
-// Exports: renderAttemptScore
+// File: attemptFormatters.ts
+// Scopo: Formatta i feedback dei tentativi usati dai componenti del dettaglio sfida.
+// Livello: Utilita funzionalita
+// Esporta: formatAttemptSummary, renderAttemptScore
 
 import type { Attempt } from "./types";
 
-export function renderAttemptScore(attempt: Attempt) {
-  return `${attempt.positiveMatched}/${attempt.totalPositive} positivi, ${attempt.negativeMatched}/${attempt.totalNegative} negativi`;
+type AttemptScoreParts = Pick<
+  Attempt,
+  "negativeMatched" | "positiveMatched" | "totalNegative" | "totalPositive"
+>;
+
+function formatAttemptCounts(score: AttemptScoreParts): string {
+  const positive = `${score.positiveMatched}/${score.totalPositive} positivi`;
+  const negative = `${score.negativeMatched}/${score.totalNegative} negativi`;
+  return `${positive}, ${negative}`;
 }
+
+export function formatAttemptSummary(attempt: Attempt): string {
+  return formatAttemptCounts(attempt);
+}
+
+export const renderAttemptScore = formatAttemptSummary;

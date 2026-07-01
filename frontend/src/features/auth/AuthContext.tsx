@@ -1,77 +1,90 @@
+// File: AuthContext.tsx
+// Scopo: Coordina stato sessione, query utente corrente e azioni auth condivise.
+// Livello: Provider feature
+// Esporta: AuthProvider
+
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 
 import { clearAccessToken, setAccessToken } from "@shared/api/client";
 import { getCurrentUser, loginUser, logoutUser, refreshAccessToken, registerUser } from "./api";
 import { AuthContext, meQueryKey, type AuthContextValue } from "./context";
-import type { RegisterPayload } from "./types";
+import type { AuthUser, LoginResponse, RegisterPayload } from "./types";
+
+function storeAuthenticatedUser(queryClient: QueryClient, session: LoginResponse): AuthUser {
+  setAccessToken(session.accessToken);
+  queryClient.setQueryData(meQueryKey, session.user);
+  return session.user;
+}
+
+function discardAuthenticatedUser(queryClient: QueryClient): void {
+  clearAccessToken();
+  queryClient.removeQueries({ queryKey: meQueryKey });
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const [hasBootstrapped, setHasBootstrapped] = useState(false);
-  const [hasToken, setHasToken] = useState(false);
+  const [isSessionReady, setIsSessionReady] = useState(false);
+  const [hasSessionToken, setHasSessionToken] = useState(false);
 
   useEffect(() => {
-    let active = true;
+    let isMounted = true;
 
     refreshAccessToken()
-      .then((token) => {
-        if (!active) return;
-        if (!token) {
+      .then((freshToken) => {
+        if (!isMounted) return;
+        if (!freshToken) {
           clearAccessToken();
-          setHasToken(false);
+          setHasSessionToken(false);
           return;
         }
-        setAccessToken(token);
-        setHasToken(true);
+        setAccessToken(freshToken);
+        setHasSessionToken(true);
       })
       .catch(() => {
-        if (!active) return;
+        if (!isMounted) return;
         clearAccessToken();
-        setHasToken(false);
+        setHasSessionToken(false);
       })
       .finally(() => {
-        if (active) setHasBootstrapped(true);
+        if (isMounted) setIsSessionReady(true);
       });
 
     return () => {
-      active = false;
+      isMounted = false;
     };
   }, []);
 
   const meQuery = useQuery({
     queryKey: meQueryKey,
     queryFn: getCurrentUser,
-    enabled: hasBootstrapped && hasToken,
+    enabled: isSessionReady && hasSessionToken,
   });
 
   const loginMutation = useMutation({
     mutationFn: loginUser,
-    onSuccess: (data) => {
-      setAccessToken(data.accessToken);
-      setHasToken(true);
-      queryClient.setQueryData(meQueryKey, data.user);
+    onSuccess: (session) => {
+      storeAuthenticatedUser(queryClient, session);
+      setHasSessionToken(true);
     },
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (payload: RegisterPayload) => {
-      await registerUser(payload);
-      return loginUser({ email: payload.email, password: payload.password });
+    mutationFn: async (registration: RegisterPayload) => {
+      await registerUser(registration);
+      return loginUser({ email: registration.email, password: registration.password });
     },
-    onSuccess: (data) => {
-      setAccessToken(data.accessToken);
-      setHasToken(true);
-      queryClient.setQueryData(meQueryKey, data.user);
+    onSuccess: (session) => {
+      storeAuthenticatedUser(queryClient, session);
+      setHasSessionToken(true);
     },
   });
 
   const logoutMutation = useMutation({
     mutationFn: logoutUser,
     onSettled: () => {
-      clearAccessToken();
-      setHasToken(false);
-      queryClient.removeQueries({ queryKey: meQueryKey });
+      discardAuthenticatedUser(queryClient);
+      setHasSessionToken(false);
     },
   });
 
@@ -79,26 +92,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       user: meQuery.data ?? null,
       isLoading:
-        !hasBootstrapped ||
+        !isSessionReady ||
         meQuery.isLoading ||
         loginMutation.isPending ||
         registerMutation.isPending ||
         logoutMutation.isPending,
       isAuthenticated: Boolean(meQuery.data),
-      login: async (payload) => {
-        const data = await loginMutation.mutateAsync(payload);
-        return data.user;
+      login: async (credentials) => {
+        const session = await loginMutation.mutateAsync(credentials);
+        return session.user;
       },
-      register: async (payload) => {
-        const data = await registerMutation.mutateAsync(payload);
-        return data.user;
+      register: async (registration) => {
+        const session = await registerMutation.mutateAsync(registration);
+        return session.user;
       },
       logout: async () => {
         await logoutMutation.mutateAsync();
       },
     }),
     [
-      hasBootstrapped,
+      isSessionReady,
       loginMutation,
       logoutMutation,
       meQuery.data,

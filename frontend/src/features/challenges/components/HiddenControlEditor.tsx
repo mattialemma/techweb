@@ -1,8 +1,8 @@
-// FILE: HiddenControlEditor.tsx
-// Purpose: Edits the hidden positive or negative control strings used when creating a challenge.
-// Layer: Feature UI component
-// Exports: HiddenControlEditor
-// Depends on: shared Input/Button and validation limits
+// File: HiddenControlEditor.tsx
+// Scopo: Modifica stringhe di controllo positive o negative nascoste nella creazione sfida.
+// Livello: Componente UI funzionalita
+// Esporta: HiddenControlEditor
+// Dipende da: Input/Button condivisi e limiti di validazione
 
 import { VALIDATION_LIMITS } from "@shared/lib/validation";
 import { Button, Input } from "@shared/ui";
@@ -11,12 +11,14 @@ type HiddenControlEditorProps = {
   error?: string;
   kind: "negative" | "positive";
   onAdd: () => void;
-  onChange: (index: number, value: string) => void;
-  onRemove: (index: number) => void;
+  onChange: (position: number, value: string) => void;
+  onRemove: (position: number) => void;
   values: string[];
 };
 
-const controlCopy = {
+type HiddenControlTone = HiddenControlEditorProps["kind"];
+
+const hiddenControlView: Record<HiddenControlTone, { label: string; placeholder: string; tone: string }> = {
   positive: {
     label: "Stringhe che devono passare",
     placeholder: "AB123",
@@ -29,8 +31,47 @@ const controlCopy = {
   },
 };
 
-export function HiddenControlEditor({ error, kind, onAdd, onChange, onRemove, values }: HiddenControlEditorProps) {
-  const copy = controlCopy[kind];
+function ControlInputRow({
+  canRemove,
+  draftValue,
+  onChange,
+  onRemove,
+  placeholder,
+  position,
+}: {
+  canRemove: boolean;
+  draftValue: string;
+  onChange: HiddenControlEditorProps["onChange"];
+  onRemove: HiddenControlEditorProps["onRemove"];
+  placeholder: string;
+  position: number;
+}) {
+  return (
+    <div className="flex gap-2">
+      <Input
+        value={draftValue}
+        maxLength={VALIDATION_LIMITS.control}
+        placeholder={placeholder}
+        onChange={(event) => onChange(position, event.target.value)}
+      />
+      <Button type="button" variant="ghost" disabled={!canRemove} onClick={() => onRemove(position)}>
+        X
+      </Button>
+    </div>
+  );
+}
+
+export function HiddenControlEditor({
+  error,
+  kind,
+  onAdd,
+  onChange,
+  onRemove,
+  values: controlValues,
+}: HiddenControlEditorProps) {
+  const copy = hiddenControlView[kind];
+  const canAppendControl = controlValues.length < VALIDATION_LIMITS.maxControlsPerKind;
+  const canRemoveControl = controlValues.length > 1;
 
   return (
     <div className={`rounded-lg border p-4 ${copy.tone}`}>
@@ -42,7 +83,7 @@ export function HiddenControlEditor({ error, kind, onAdd, onChange, onRemove, va
         <Button
           type="button"
           variant="secondary"
-          disabled={values.length >= VALIDATION_LIMITS.maxControlsPerKind}
+          disabled={!canAppendControl}
           onClick={onAdd}
         >
           Aggiungi
@@ -50,18 +91,16 @@ export function HiddenControlEditor({ error, kind, onAdd, onChange, onRemove, va
       </div>
 
       <div className="mt-4 space-y-3">
-        {values.map((control, index) => (
-          <div key={`${kind}-${index}`} className="flex gap-2">
-            <Input
-              value={control}
-              maxLength={VALIDATION_LIMITS.control}
-              placeholder={copy.placeholder}
-              onChange={(event) => onChange(index, event.target.value)}
-            />
-            <Button type="button" variant="ghost" disabled={values.length === 1} onClick={() => onRemove(index)}>
-              X
-            </Button>
-          </div>
+        {controlValues.map((controlValue, position) => (
+          <ControlInputRow
+            key={`${kind}-${position}`}
+            canRemove={canRemoveControl}
+            draftValue={controlValue}
+            onChange={onChange}
+            onRemove={onRemove}
+            placeholder={copy.placeholder}
+            position={position}
+          />
         ))}
       </div>
       {error ? <p className="mt-3 text-sm text-rose-300">{error}</p> : null}

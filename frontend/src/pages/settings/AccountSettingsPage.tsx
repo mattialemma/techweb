@@ -1,3 +1,8 @@
+// File: AccountSettingsPage.tsx
+// Scopo: Gestisce profilo, avatar e cambio password dell'utente corrente.
+// Livello: Pagina privata
+// Dipende da: auth/user feature, parser errori API, primitive form condivise
+
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 
@@ -28,37 +33,64 @@ import {
   PasswordInput,
 } from "@shared/ui";
 
+type ProfileDraft = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+};
+
+type PasswordDraft = {
+  confirmPassword: string;
+  currentPassword: string;
+  newPassword: string;
+};
+
+const emptyPasswordDraft: PasswordDraft = {
+  currentPassword: "",
+  newPassword: "",
+  confirmPassword: "",
+};
+
+function profileDraftFromUser(user: ReturnType<typeof useAuth>["user"]): ProfileDraft {
+  return {
+    username: user?.username ?? "",
+    email: user?.email ?? "",
+    firstName: user?.firstName ?? "",
+    lastName: user?.lastName ?? "",
+  };
+}
+
 export function AccountSettingsPage() {
   const { user } = useAuth();
   const updateUser = useUpdateCurrentUser();
   const uploadAvatar = useUploadCurrentUserAvatar();
   const deleteAvatar = useDeleteCurrentUserAvatar();
-  const [values, setValues] = useState({
-    username: user?.username ?? "",
-    email: user?.email ?? "",
-    firstName: user?.firstName ?? "",
-    lastName: user?.lastName ?? "",
-  });
+  const [profileDraft, setProfileDraft] = useState<ProfileDraft>(() => profileDraftFromUser(user));
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [message, setMessage] = useState("");
-  const [passwordValues, setPasswordValues] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
+  const [passwordDraft, setPasswordDraft] = useState<PasswordDraft>(emptyPasswordDraft);
   const [passwordErrors, setPasswordErrors] = useState<ValidationErrors>({});
   const [passwordMessage, setPasswordMessage] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
+  function updateProfileField(field: keyof ProfileDraft, value: string) {
+    setProfileDraft((current) => ({ ...current, [field]: value }));
+  }
+
+  function updatePasswordField(field: keyof PasswordDraft, value: string) {
+    setPasswordDraft((current) => ({ ...current, [field]: value }));
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const nextErrors = validateProfile(values);
+    const nextErrors = validateProfile(profileDraft);
     setErrors(nextErrors);
     setMessage("");
     if (Object.keys(nextErrors).length > 0) return;
 
     try {
-      await updateUser.mutateAsync(values);
+      await updateUser.mutateAsync(profileDraft);
       setMessage("Profilo aggiornato.");
     } catch (error) {
       setErrors(parseApiFieldErrors<ValidationErrors>(error));
@@ -95,15 +127,15 @@ export function AccountSettingsPage() {
 
   async function handlePasswordSubmit(event: FormEvent) {
     event.preventDefault();
-    const nextErrors = validatePasswordChange(passwordValues);
+    const nextErrors = validatePasswordChange(passwordDraft);
     setPasswordErrors(nextErrors);
     setPasswordMessage("");
     if (Object.keys(nextErrors).length > 0) return;
 
     setIsChangingPassword(true);
     try {
-      await changeCurrentPassword(passwordValues.currentPassword, passwordValues.newPassword);
-      setPasswordValues({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      await changeCurrentPassword(passwordDraft.currentPassword, passwordDraft.newPassword);
+      setPasswordDraft(emptyPasswordDraft);
       setPasswordMessage("Password aggiornata.");
     } catch (error) {
       setPasswordErrors(parseApiFieldErrors<ValidationErrors>(error));
@@ -145,32 +177,32 @@ export function AccountSettingsPage() {
               ) : null}
               <FormField label="Username" error={errors.username}>
                 <Input
-                  value={values.username}
+                  value={profileDraft.username}
                   maxLength={VALIDATION_LIMITS.username}
-                  onChange={(event) => setValues({ ...values, username: event.target.value })}
+                  onChange={(event) => updateProfileField("username", event.target.value)}
                 />
               </FormField>
               <FormField label="Email" error={errors.email}>
                 <Input
                   inputMode="email"
-                  value={values.email}
+                  value={profileDraft.email}
                   maxLength={VALIDATION_LIMITS.email}
-                  onChange={(event) => setValues({ ...values, email: event.target.value })}
+                  onChange={(event) => updateProfileField("email", event.target.value)}
                 />
               </FormField>
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField label="Nome" error={errors.firstName}>
                   <Input
-                    value={values.firstName}
+                    value={profileDraft.firstName}
                     maxLength={VALIDATION_LIMITS.name}
-                    onChange={(event) => setValues({ ...values, firstName: event.target.value })}
+                    onChange={(event) => updateProfileField("firstName", event.target.value)}
                   />
                 </FormField>
                 <FormField label="Cognome" error={errors.lastName}>
                   <Input
-                    value={values.lastName}
+                    value={profileDraft.lastName}
                     maxLength={VALIDATION_LIMITS.name}
-                    onChange={(event) => setValues({ ...values, lastName: event.target.value })}
+                    onChange={(event) => updateProfileField("lastName", event.target.value)}
                   />
                 </FormField>
               </div>
@@ -205,10 +237,8 @@ export function AccountSettingsPage() {
                 <PasswordInput
                   autoComplete="current-password"
                   maxLength={VALIDATION_LIMITS.password}
-                  value={passwordValues.currentPassword}
-                  onChange={(event) =>
-                    setPasswordValues({ ...passwordValues, currentPassword: event.target.value })
-                  }
+                  value={passwordDraft.currentPassword}
+                  onChange={(event) => updatePasswordField("currentPassword", event.target.value)}
                 />
               </FormField>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -216,20 +246,16 @@ export function AccountSettingsPage() {
                   <PasswordInput
                     autoComplete="new-password"
                     maxLength={VALIDATION_LIMITS.password}
-                    value={passwordValues.newPassword}
-                    onChange={(event) =>
-                      setPasswordValues({ ...passwordValues, newPassword: event.target.value })
-                    }
+                    value={passwordDraft.newPassword}
+                    onChange={(event) => updatePasswordField("newPassword", event.target.value)}
                   />
                 </FormField>
                 <FormField label="Conferma nuova password" error={passwordErrors.confirmPassword}>
                   <PasswordInput
                     autoComplete="new-password"
                     maxLength={VALIDATION_LIMITS.password}
-                    value={passwordValues.confirmPassword}
-                    onChange={(event) =>
-                      setPasswordValues({ ...passwordValues, confirmPassword: event.target.value })
-                    }
+                    value={passwordDraft.confirmPassword}
+                    onChange={(event) => updatePasswordField("confirmPassword", event.target.value)}
                   />
                 </FormField>
               </div>

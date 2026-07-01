@@ -1,8 +1,8 @@
-// FILE: challenges.spec.ts
-// Purpose: Covers challenge creation and solving journeys through the browser.
-// Layer: E2E test suite
-// Exports: Playwright tests
-// Depends on: helpers.ts and the running frontend/backend stack
+// File: challenges.spec.ts
+// Scopo: Copre nel browser i percorsi di creazione e soluzione delle sfide.
+// Livello: Suite test E2E
+// Esporta: test Playwright
+// Dipende da: helpers.ts e dallo stack frontend/backend in esecuzione
 
 import { expect, test } from "@playwright/test";
 

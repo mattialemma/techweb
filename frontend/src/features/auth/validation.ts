@@ -1,4 +1,8 @@
-import type { RegisterPayload } from "./types";
+// File: validation.ts
+// Scopo: Valida input di autenticazione, profilo e avatar prima delle chiamate API.
+// Livello: Validazione feature
+// Esporta: funzioni di validazione e tipo ValidationErrors
+
 import {
   VALIDATION_LIMITS,
   maxLength,
@@ -6,19 +10,45 @@ import {
   validateEmailFormat,
   validatePasswordComplexity,
 } from "@shared/lib/validation";
+import type { RegisterPayload } from "./types";
 
 export type ValidationErrors = Record<string, string>;
 
-export function validateEmail(email: string): string | null {
-  return validateEmailFormat(email);
+type PasswordResetValues = {
+  email: string;
+  code: string;
+  newPassword: string;
+  confirmPassword: string;
+};
+
+type PasswordChangeValues = {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+};
+
+type EditableProfileValues = {
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+};
+
+function assignError(errors: ValidationErrors, fieldName: string, message: string | null): void {
+  if (message) errors[fieldName] = message;
 }
 
-export function validateLogin(values: { email: string; password: string }): ValidationErrors {
-  const errors: ValidationErrors = {};
-  const emailError = validateEmail(values.email);
-  if (emailError) errors.email = emailError;
-  if (!values.password) errors.password = "Password obbligatoria.";
-  return errors;
+function inspectPersonName(value: string, label: string): string | null {
+  return required(value, label) ?? maxLength(value, VALIDATION_LIMITS.name);
+}
+
+function inspectUsername(username: string): string | null {
+  if (!username.trim()) return "Username obbligatorio.";
+  return maxLength(username, VALIDATION_LIMITS.username);
+}
+
+export function validateEmail(email: string): string | null {
+  return validateEmailFormat(email);
 }
 
 export function validateOtpCode(code: string): string | null {
@@ -27,98 +57,71 @@ export function validateOtpCode(code: string): string | null {
   return null;
 }
 
-export function validatePasswordReset(values: {
-  email: string;
-  code: string;
-  newPassword: string;
-  confirmPassword: string;
-}): ValidationErrors {
+export function validateLogin(credentials: { email: string; password: string }): ValidationErrors {
   const errors: ValidationErrors = {};
-  const emailError = validateEmail(values.email);
-  const codeError = validateOtpCode(values.code);
-  const passwordError = validatePasswordComplexity(values.newPassword);
-
-  if (emailError) errors.email = emailError;
-  if (codeError) errors.code = codeError;
-  if (passwordError) errors.newPassword = passwordError;
-  if (values.confirmPassword !== values.newPassword) {
-    errors.confirmPassword = "Le password non coincidono.";
-  }
-
+  assignError(errors, "email", validateEmail(credentials.email));
+  if (!credentials.password) errors.password = "Password obbligatoria.";
   return errors;
 }
 
-export function validatePasswordChange(values: {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}): ValidationErrors {
+export function validatePasswordChange(passwords: PasswordChangeValues): ValidationErrors {
   const errors: ValidationErrors = {};
-  const passwordError = validatePasswordComplexity(values.newPassword);
+  const nextPasswordError = validatePasswordComplexity(passwords.newPassword);
 
-  if (!values.currentPassword) errors.currentPassword = "Password attuale obbligatoria.";
-  if (values.currentPassword.length > VALIDATION_LIMITS.password) {
+  if (!passwords.currentPassword) errors.currentPassword = "Password attuale obbligatoria.";
+  if (passwords.currentPassword.length > VALIDATION_LIMITS.password) {
     errors.currentPassword = `Massimo ${VALIDATION_LIMITS.password} caratteri.`;
   }
-  if (passwordError) errors.newPassword = passwordError;
-  if (values.currentPassword && values.currentPassword === values.newPassword) {
+  if (nextPasswordError) errors.newPassword = nextPasswordError;
+  if (passwords.currentPassword && passwords.currentPassword === passwords.newPassword) {
     errors.newPassword = "La nuova password deve essere diversa.";
   }
-  if (values.confirmPassword !== values.newPassword) {
+  if (passwords.confirmPassword !== passwords.newPassword) {
     errors.confirmPassword = "Le password non coincidono.";
   }
 
   return errors;
 }
 
-export function validateRegister(values: RegisterPayload): ValidationErrors {
+export function validatePasswordReset(resetValues: PasswordResetValues): ValidationErrors {
   const errors: ValidationErrors = {};
-  const username = values.username.trim();
-  const emailError = validateEmail(values.email);
-  const passwordError = validatePasswordComplexity(values.password);
 
-  if (!username) errors.username = "Username obbligatorio.";
-  if (username.length > VALIDATION_LIMITS.username) {
-    errors.username = `Massimo ${VALIDATION_LIMITS.username} caratteri.`;
+  assignError(errors, "email", validateEmail(resetValues.email));
+  assignError(errors, "code", validateOtpCode(resetValues.code));
+  assignError(errors, "newPassword", validatePasswordComplexity(resetValues.newPassword));
+  if (resetValues.confirmPassword !== resetValues.newPassword) {
+    errors.confirmPassword = "Le password non coincidono.";
   }
-  if (emailError) errors.email = emailError;
-  if (passwordError) errors.password = passwordError;
-  const firstNameRequired = required(values.firstName, "Nome");
-  const lastNameRequired = required(values.lastName, "Cognome");
-  const firstNameError = maxLength(values.firstName ?? "", VALIDATION_LIMITS.name);
-  const lastNameError = maxLength(values.lastName ?? "", VALIDATION_LIMITS.name);
-  if (firstNameRequired || firstNameError) errors.firstName = firstNameRequired ?? firstNameError ?? "";
-  if (lastNameRequired || lastNameError) errors.lastName = lastNameRequired ?? lastNameError ?? "";
 
   return errors;
 }
 
-export function validateProfile(values: {
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-}): ValidationErrors {
+export function validateProfile(profile: EditableProfileValues): ValidationErrors {
   const errors: ValidationErrors = {};
-  const emailError = validateEmail(values.email);
 
-  if (!values.username.trim()) errors.username = "Username obbligatorio.";
-  if (values.username.length > VALIDATION_LIMITS.username) {
-    errors.username = `Massimo ${VALIDATION_LIMITS.username} caratteri.`;
-  }
-  if (emailError) errors.email = emailError;
-  const firstNameRequired = required(values.firstName, "Nome");
-  const lastNameRequired = required(values.lastName, "Cognome");
-  const firstNameError = maxLength(values.firstName, VALIDATION_LIMITS.name);
-  const lastNameError = maxLength(values.lastName, VALIDATION_LIMITS.name);
-  if (firstNameRequired || firstNameError) errors.firstName = firstNameRequired ?? firstNameError ?? "";
-  if (lastNameRequired || lastNameError) errors.lastName = lastNameRequired ?? lastNameError ?? "";
+  assignError(errors, "username", inspectUsername(profile.username));
+  assignError(errors, "email", validateEmail(profile.email));
+  assignError(errors, "firstName", inspectPersonName(profile.firstName, "Nome"));
+  assignError(errors, "lastName", inspectPersonName(profile.lastName, "Cognome"));
 
   return errors;
 }
 
-export function validateAvatar(file: File): string | null {
-  if (!file.type.startsWith("image/")) return "Seleziona un file immagine.";
-  if (file.size > VALIDATION_LIMITS.avatarBytes) return "L'avatar deve pesare al massimo 2 MB.";
+export function validateRegister(registration: RegisterPayload): ValidationErrors {
+  const errors = validateProfile({
+    username: registration.username.trim(),
+    email: registration.email,
+    firstName: registration.firstName,
+    lastName: registration.lastName,
+  });
+
+  assignError(errors, "password", validatePasswordComplexity(registration.password));
+
+  return errors;
+}
+
+export function validateAvatar(candidateFile: File): string | null {
+  if (!candidateFile.type.startsWith("image/")) return "Seleziona un file immagine.";
+  if (candidateFile.size > VALIDATION_LIMITS.avatarBytes) return "L'avatar deve pesare al massimo 2 MB.";
   return null;
 }

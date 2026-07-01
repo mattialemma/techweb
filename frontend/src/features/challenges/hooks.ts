@@ -1,82 +1,94 @@
+// File: hooks.ts
+// Scopo: Collega API challenges a React Query con chiavi cache stabili.
+// Livello: Hook feature
+// Esporta: hook dati e factory delle query key
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
-  fetchPersonalAttemptLog,
-  fetchPuzzle,
-  fetchPuzzleCatalog,
-  fetchSolverBoard,
-  publishPuzzle,
-  submitPuzzleAttempt,
+  createPuzzleAttempt,
+  createPuzzleFromDraft,
+  readPersonalAttempts,
+  readPuzzleCatalog,
+  readPuzzleDetail,
+  readSolverBoard,
 } from "./api";
 import type { PuzzleOrdering } from "./types";
 
-export function usePuzzleCatalog(page = 1, ordering: PuzzleOrdering = "newest") {
-  return useQuery({
-    queryKey: puzzleCatalogKey(page, ordering),
-    queryFn: () => fetchPuzzleCatalog(page, ordering),
-  });
-}
+const puzzleRootKey = "puzzles";
+const solverBoardRootKey = "solver-board";
 
-export function usePublishPuzzle() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: publishPuzzle,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["puzzles"] });
-    },
-  });
-}
-
-export function usePuzzle(challengeId: string) {
-  return useQuery({
-    queryKey: puzzleDetailKey(challengeId),
-    queryFn: () => fetchPuzzle(challengeId),
-    enabled: challengeId.length > 0,
-  });
-}
-
-export function usePersonalAttemptLog(challengeId: string) {
-  return useQuery({
-    queryKey: personalAttemptLogKey(challengeId),
-    queryFn: () => fetchPersonalAttemptLog(challengeId),
-    enabled: challengeId.length > 0,
-  });
-}
-
-export function useSubmitPuzzleAttempt() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: submitPuzzleAttempt,
-    onSuccess: (attempt) => {
-      queryClient.invalidateQueries({
-        queryKey: personalAttemptLogKey(String(attempt.challengeId)),
-      });
-      if (attempt.solved) {
-        queryClient.invalidateQueries({ queryKey: ["solver-board"] });
-      }
-    },
-  });
-}
-
-export function useSolverBoard(page = 1) {
-  return useQuery({
-    queryKey: solverBoardKey(page),
-    queryFn: () => fetchSolverBoard(page),
-  });
-}
-
-export function puzzleCatalogKey(page: number, ordering: PuzzleOrdering) {
-  return ["puzzles", page, ordering] as const;
+export function puzzleCatalogKey(pageNumber: number, sortMode: PuzzleOrdering) {
+  return [puzzleRootKey, pageNumber, sortMode] as const;
 }
 
 export function puzzleDetailKey(challengeId: string) {
-  return ["puzzles", challengeId] as const;
+  return [puzzleRootKey, challengeId] as const;
 }
 
 export function personalAttemptLogKey(challengeId: string) {
   return ["challenges", challengeId, "attempts", "me"] as const;
 }
 
-export function solverBoardKey(page: number) {
-  return ["solver-board", page] as const;
+export function solverBoardKey(pageNumber: number) {
+  return [solverBoardRootKey, pageNumber] as const;
+}
+
+export function usePuzzleCatalog(pageNumber = 1, sortMode: PuzzleOrdering = "newest") {
+  return useQuery({
+    queryKey: puzzleCatalogKey(pageNumber, sortMode),
+    queryFn: () => readPuzzleCatalog(pageNumber, sortMode),
+  });
+}
+
+export function usePuzzle(challengeId: string) {
+  const canLoadPuzzle = challengeId.length > 0;
+
+  return useQuery({
+    queryKey: puzzleDetailKey(challengeId),
+    queryFn: () => readPuzzleDetail(challengeId),
+    enabled: canLoadPuzzle,
+  });
+}
+
+export function useSubmitPuzzleAttempt() {
+  const cache = useQueryClient();
+  return useMutation({
+    mutationFn: createPuzzleAttempt,
+    onSuccess: (savedAttempt) => {
+      cache.invalidateQueries({
+        queryKey: personalAttemptLogKey(String(savedAttempt.challengeId)),
+      });
+      if (savedAttempt.solved) {
+        cache.invalidateQueries({ queryKey: [solverBoardRootKey] });
+      }
+    },
+  });
+}
+
+export function usePersonalAttemptLog(challengeId: string) {
+  const canLoadAttempts = challengeId.length > 0;
+
+  return useQuery({
+    queryKey: personalAttemptLogKey(challengeId),
+    queryFn: () => readPersonalAttempts(challengeId),
+    enabled: canLoadAttempts,
+  });
+}
+
+export function usePublishPuzzle() {
+  const cache = useQueryClient();
+  return useMutation({
+    mutationFn: createPuzzleFromDraft,
+    onSuccess: () => {
+      cache.invalidateQueries({ queryKey: [puzzleRootKey] });
+    },
+  });
+}
+
+export function useSolverBoard(pageNumber = 1) {
+  return useQuery({
+    queryKey: solverBoardKey(pageNumber),
+    queryFn: () => readSolverBoard(pageNumber),
+  });
 }

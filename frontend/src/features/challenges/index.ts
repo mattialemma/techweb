@@ -1,3 +1,7 @@
+// File: index.ts
+// Scopo: Riesporta componenti, hook, tipi e validazioni della funzionalita sfide.
+// Livello: Barile feature
+
 export * from "./attemptFormatters";
 export * from "./components/AttemptLogPanel";
 export * from "./components/HiddenControlEditor";

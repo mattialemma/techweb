@@ -51,19 +51,35 @@ a {
   text-decoration: none;
 }
 
+input,
+textarea {
+  color-scheme: dark;
+}
+
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
 textarea:-webkit-autofill,
 textarea:-webkit-autofill:hover,
-textarea:-webkit-autofill:focus {
-  -webkit-text-fill-color: #fff;
+textarea:-webkit-autofill:focus,
+textarea:-webkit-autofill:active {
+  background-color: rgba(9, 9, 11, 0.94) !important;
+  -webkit-box-shadow: 0 0 0 1000px rgba(9, 9, 11, 0.94) inset !important;
+  box-shadow: 0 0 0 1000px rgba(9, 9, 11, 0.94) inset !important;
+  -webkit-text-fill-color: #fff !important;
   caret-color: #fff;
-  box-shadow: 0 0 0 1000px rgba(9, 9, 11, 0.94) inset;
-  transition: background-color 9999s ease-in-out 0s;
+  transition: background-color 9999s ease-out 0s;
 }
 
-/* User-generated text can contain long tokens without spaces; keep pages from widening. */
+input:autofill,
+textarea:autofill {
+  background-color: rgba(9, 9, 11, 0.94) !important;
+  box-shadow: 0 0 0 1000px rgba(9, 9, 11, 0.94) inset !important;
+  color: #fff !important;
+}
+
+/* Il testo generato dagli utenti puo contenere token lunghi; evita l'allargamento delle pagine. */
 p,
 h1,
 h2,

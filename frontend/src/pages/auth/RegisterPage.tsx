@@ -1,3 +1,8 @@
+// File: RegisterPage.tsx
+// Scopo: Registra un nuovo utente e lo porta al catalogo sfide.
+// Livello: Pagina auth
+// Dipende da: contesto autenticazione, validazione registrazione, UI form condivisa
+
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -8,22 +13,34 @@ import { AuthCard, Button, FormField, InlineMessage, Input, PasswordInput } from
 
 type RegisterField = keyof RegisterPayload;
 
+const blankRegistration: RegisterPayload = {
+  username: "",
+  email: "",
+  password: "",
+  firstName: "",
+  lastName: "",
+};
+
+function normalizeRegistrationDraft(draft: RegisterPayload): RegisterPayload {
+  return {
+    ...draft,
+    username: draft.username.trim(),
+    email: draft.email.trim(),
+    firstName: draft.firstName.trim(),
+    lastName: draft.lastName.trim(),
+  };
+}
+
 export function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [values, setValues] = useState<RegisterPayload>({
-    username: "",
-    email: "",
-    password: "",
-    firstName: "",
-    lastName: "",
-  });
+  const [registrationDraft, setRegistrationDraft] = useState<RegisterPayload>(blankRegistration);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function updateField(field: RegisterField, value: string) {
-    setValues((current) => ({ ...current, [field]: value }));
+  function updateRegistrationField(field: RegisterField, value: string) {
+    setRegistrationDraft((current) => ({ ...current, [field]: value }));
     setErrors((current) => {
       const remainingErrors = { ...current };
       delete remainingErrors[field];
@@ -34,20 +51,14 @@ export function RegisterPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const nextErrors = validateRegister(values);
+    const nextErrors = validateRegister(registrationDraft);
     setErrors(nextErrors);
     setSubmitError("");
     if (Object.keys(nextErrors).length > 0) return;
 
     setIsSubmitting(true);
     try {
-      await register({
-        ...values,
-        username: values.username.trim(),
-        email: values.email.trim(),
-        firstName: values.firstName.trim(),
-        lastName: values.lastName.trim(),
-      });
+      await register(normalizeRegistrationDraft(registrationDraft));
       navigate("/challenges", { replace: true });
     } catch (error) {
       const apiErrors = parseApiFieldErrors<ValidationErrors>(error);
@@ -66,8 +77,8 @@ export function RegisterPage() {
           <Input
             autoComplete="username"
             maxLength={VALIDATION_LIMITS.username}
-            value={values.username}
-            onChange={(event) => updateField("username", event.target.value)}
+            value={registrationDraft.username}
+            onChange={(event) => updateRegistrationField("username", event.target.value)}
           />
         </FormField>
         <FormField label="Email" error={errors.email}>
@@ -75,8 +86,8 @@ export function RegisterPage() {
             autoComplete="email"
             inputMode="email"
             maxLength={VALIDATION_LIMITS.email}
-            value={values.email}
-            onChange={(event) => updateField("email", event.target.value)}
+            value={registrationDraft.email}
+            onChange={(event) => updateRegistrationField("email", event.target.value)}
           />
         </FormField>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -84,16 +95,16 @@ export function RegisterPage() {
             <Input
               autoComplete="given-name"
               maxLength={VALIDATION_LIMITS.name}
-              value={values.firstName}
-              onChange={(event) => updateField("firstName", event.target.value)}
+              value={registrationDraft.firstName}
+              onChange={(event) => updateRegistrationField("firstName", event.target.value)}
             />
           </FormField>
           <FormField label="Cognome" error={errors.lastName}>
             <Input
               autoComplete="family-name"
               maxLength={VALIDATION_LIMITS.name}
-              value={values.lastName}
-              onChange={(event) => updateField("lastName", event.target.value)}
+              value={registrationDraft.lastName}
+              onChange={(event) => updateRegistrationField("lastName", event.target.value)}
             />
           </FormField>
         </div>
@@ -101,8 +112,8 @@ export function RegisterPage() {
           <PasswordInput
             autoComplete="new-password"
             maxLength={VALIDATION_LIMITS.password}
-            value={values.password}
-            onChange={(event) => updateField("password", event.target.value)}
+            value={registrationDraft.password}
+            onChange={(event) => updateRegistrationField("password", event.target.value)}
           />
         </FormField>
         <Button type="submit" isLoading={isSubmitting} className="w-full">

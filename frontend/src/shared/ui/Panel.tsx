@@ -1,7 +1,8 @@
-// FILE: Panel.tsx
-// Purpose: Provides the shared translucent panel shell used by app pages.
-// Layer: UI primitive
-// Exports: Panel
+// File: Panel.tsx
+// Scopo: Fornisce il pannello traslucido condiviso usato dalle pagine app.
+// Livello: Primitiva UI
+// Esporta: Panel
+
 import type { HTMLAttributes, ReactNode } from "react";
 
 type PanelElement = "aside" | "article" | "div" | "section";
@@ -20,6 +21,13 @@ const paddingClass: Record<PanelPadding, string> = {
   lg: "p-5 sm:p-6",
 };
 
+const panelShellClass =
+  "min-w-0 rounded-lg border border-white/10 bg-zinc-950/48 shadow-2xl shadow-black/25 backdrop-blur";
+
+function composePanelClass(padding: PanelPadding, className: string): string {
+  return [panelShellClass, paddingClass[padding], className].filter(Boolean).join(" ");
+}
+
 export function Panel({
   as: Component = "section",
   children,
@@ -27,13 +35,7 @@ export function Panel({
   padding = "md",
   ...props
 }: PanelProps) {
-  const classes = [
-    "min-w-0 rounded-lg border border-white/10 bg-zinc-950/48 shadow-2xl shadow-black/25 backdrop-blur",
-    paddingClass[padding],
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const classes = composePanelClass(padding, className);
 
   return (
     <Component className={classes} {...props}>

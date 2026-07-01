@@ -1,3 +1,8 @@
+// File: CreateChallengePage.tsx
+// Scopo: Compone e pubblica una nuova sfida regex con controlli nascosti.
+// Livello: Pagina privata
+// Dipende da: feature challenges, parser errori API, primitive form condivise
+
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -22,37 +27,70 @@ const emptyChallenge: CreateChallengePayload = {
   negativeControls: [""],
 };
 
-function replaceControlAt(values: string[], index: number, nextValue: string): string[] {
-  return values.map((value, currentIndex) => (currentIndex === index ? nextValue : value));
+type ChallengeField = keyof Pick<
+  CreateChallengePayload,
+  "description" | "negativeExample" | "positiveExample" | "secretRegex" | "title"
+>;
+
+type ControlField = "negativeControls" | "positiveControls";
+
+function replaceControlAt(controls: string[], position: number, nextValue: string): string[] {
+  return controls.map((control, currentPosition) => (currentPosition === position ? nextValue : control));
 }
 
-function dropControlAt(values: string[], index: number): string[] {
-  return values.length === 1 ? values : values.filter((_, currentIndex) => currentIndex !== index);
+function dropControlAt(controls: string[], position: number): string[] {
+  return controls.length === 1 ? controls : controls.filter((_, currentPosition) => currentPosition !== position);
+}
+
+function buildChallengePayload(draft: CreateChallengePayload): CreateChallengePayload {
+  return {
+    ...draft,
+    title: draft.title.trim(),
+    description: draft.description.trim(),
+    positiveControls: draft.positiveControls,
+    negativeControls: draft.negativeControls,
+  };
 }
 
 export function CreateChallengePage() {
   const navigate = useNavigate();
-  const publishPuzzle = usePublishPuzzle();
-  const [values, setValues] = useState<CreateChallengePayload>(emptyChallenge);
+  const createPuzzle = usePublishPuzzle();
+  const [challengeDraft, setChallengeDraft] = useState<CreateChallengePayload>(emptyChallenge);
   const [errors, setErrors] = useState<ChallengeValidationErrors>({});
   const [submitError, setSubmitError] = useState("");
 
+  function updateChallengeField(field: ChallengeField, value: string) {
+    setChallengeDraft((current) => ({ ...current, [field]: value }));
+  }
+
+  function appendControl(field: ControlField) {
+    setChallengeDraft((current) => ({ ...current, [field]: [...current[field], ""] }));
+  }
+
+  function updateControl(field: ControlField, position: number, value: string) {
+    setChallengeDraft((current) => ({
+      ...current,
+      [field]: replaceControlAt(current[field], position, value),
+    }));
+  }
+
+  function removeControl(field: ControlField, position: number) {
+    setChallengeDraft((current) => ({
+      ...current,
+      [field]: dropControlAt(current[field], position),
+    }));
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const payload: CreateChallengePayload = {
-      ...values,
-      title: values.title.trim(),
-      description: values.description.trim(),
-      positiveControls: values.positiveControls,
-      negativeControls: values.negativeControls,
-    };
+    const payload = buildChallengePayload(challengeDraft);
     const nextErrors = inspectPuzzleDraft(payload);
     setErrors(nextErrors);
     setSubmitError("");
     if (Object.keys(nextErrors).length > 0) return;
 
     try {
-      await publishPuzzle.mutateAsync(payload);
+      await createPuzzle.mutateAsync(payload);
       navigate("/challenges", { replace: true });
     } catch (error) {
       const parsedErrors = parseApiFieldErrors<ChallengeValidationErrors>(error);
@@ -67,11 +105,10 @@ export function CreateChallengePage() {
 
   return (
     <ContentStage
-        eyebrow="Nuovo pattern"
-        title="Prepara una sfida"
-        description="Gli esempi sono pubblici; regex e controlli restano nascosti nel backend."
+      eyebrow="Nuovo pattern"
+      title="Prepara una sfida"
+      description="Gli esempi sono pubblici; regex e controlli restano nascosti nel backend."
     >
-
       <form className="space-y-5" onSubmit={handleSubmit}>
         {submitError ? <InlineMessage tone="error">{submitError}</InlineMessage> : null}
 
@@ -79,39 +116,39 @@ export function CreateChallengePage() {
           <div className="space-y-4">
             <FormField label="Titolo" error={errors.title}>
               <Input
-                value={values.title}
+                value={challengeDraft.title}
                 maxLength={VALIDATION_LIMITS.challengeTitle}
-                onChange={(event) => setValues({ ...values, title: event.target.value })}
+                onChange={(event) => updateChallengeField("title", event.target.value)}
               />
             </FormField>
             <FormField label="Descrizione" error={errors.description}>
               <Textarea
-                value={values.description}
+                value={challengeDraft.description}
                 maxLength={VALIDATION_LIMITS.challengeDescription}
-                onChange={(event) => setValues({ ...values, description: event.target.value })}
+                onChange={(event) => updateChallengeField("description", event.target.value)}
               />
             </FormField>
             <FormField label="Regex segreta" error={errors.secretRegex}>
               <Input
-                value={values.secretRegex}
+                value={challengeDraft.secretRegex}
                 maxLength={VALIDATION_LIMITS.regex}
                 placeholder="^[A-Z]{2}[0-9]{3}$"
-                onChange={(event) => setValues({ ...values, secretRegex: event.target.value })}
+                onChange={(event) => updateChallengeField("secretRegex", event.target.value)}
               />
             </FormField>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="Esempio positivo" error={errors.positiveExample}>
                 <Input
-                  value={values.positiveExample}
+                  value={challengeDraft.positiveExample}
                   maxLength={VALIDATION_LIMITS.example}
-                  onChange={(event) => setValues({ ...values, positiveExample: event.target.value })}
+                  onChange={(event) => updateChallengeField("positiveExample", event.target.value)}
                 />
               </FormField>
               <FormField label="Esempio negativo" error={errors.negativeExample}>
                 <Input
-                  value={values.negativeExample}
+                  value={challengeDraft.negativeExample}
                   maxLength={VALIDATION_LIMITS.example}
-                  onChange={(event) => setValues({ ...values, negativeExample: event.target.value })}
+                  onChange={(event) => updateChallengeField("negativeExample", event.target.value)}
                 />
               </FormField>
             </div>
@@ -122,42 +159,18 @@ export function CreateChallengePage() {
           <HiddenControlEditor
             error={errors.positiveControls}
             kind="positive"
-            values={values.positiveControls}
-            onAdd={() =>
-              setValues({ ...values, positiveControls: [...values.positiveControls, ""] })
-            }
-            onChange={(index, value) =>
-              setValues({
-                ...values,
-                positiveControls: replaceControlAt(values.positiveControls, index, value),
-              })
-            }
-            onRemove={(index) =>
-              setValues({
-                ...values,
-                positiveControls: dropControlAt(values.positiveControls, index),
-              })
-            }
+            values={challengeDraft.positiveControls}
+            onAdd={() => appendControl("positiveControls")}
+            onChange={(position, value) => updateControl("positiveControls", position, value)}
+            onRemove={(position) => removeControl("positiveControls", position)}
           />
           <HiddenControlEditor
             error={errors.negativeControls}
             kind="negative"
-            values={values.negativeControls}
-            onAdd={() =>
-              setValues({ ...values, negativeControls: [...values.negativeControls, ""] })
-            }
-            onChange={(index, value) =>
-              setValues({
-                ...values,
-                negativeControls: replaceControlAt(values.negativeControls, index, value),
-              })
-            }
-            onRemove={(index) =>
-              setValues({
-                ...values,
-                negativeControls: dropControlAt(values.negativeControls, index),
-              })
-            }
+            values={challengeDraft.negativeControls}
+            onAdd={() => appendControl("negativeControls")}
+            onChange={(position, value) => updateControl("negativeControls", position, value)}
+            onRemove={(position) => removeControl("negativeControls", position)}
           />
         </div>
 
@@ -165,7 +178,7 @@ export function CreateChallengePage() {
           <Button type="button" variant="secondary" onClick={() => navigate("/challenges")}>
             Annulla
           </Button>
-          <Button type="submit" isLoading={publishPuzzle.isPending}>
+          <Button type="submit" isLoading={createPuzzle.isPending}>
             Pubblica sfida
           </Button>
         </div>

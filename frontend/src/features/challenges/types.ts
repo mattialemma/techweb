@@ -1,3 +1,7 @@
+// File: types.ts
+// Scopo: Definisce modelli API e payload della funzionalita sfide.
+// Livello: Tipi feature
+
 export type PaginatedResponse<T> = {
   count: number;
   next: string | null;

@@ -1,3 +1,8 @@
+// File: api.ts
+// Scopo: Incapsula le chiamate HTTP della funzionalita autenticazione.
+// Livello: API feature
+// Esporta: operazioni per sessione, utente corrente e reset password
+
 import apiClient from "@shared/api/client";
 import type {
   AuthUser,
@@ -7,58 +12,77 @@ import type {
   RegisterPayload,
 } from "./types";
 
-export async function registerUser(payload: RegisterPayload): Promise<AuthUser> {
-  const { data } = await apiClient.post<AuthUser>("/users", payload);
-  return data;
-}
-
-export async function loginUser(payload: LoginPayload): Promise<LoginResponse> {
-  const { data } = await apiClient.post<LoginResponse>("/sessions", payload);
-  return data;
-}
+const authRoutes = {
+  accessToken: "/sessions/current/access-token",
+  currentPassword: "/users/me/password",
+  currentSession: "/sessions/current",
+  currentUser: "/users/me",
+  login: "/sessions",
+  passwordReset: "/password-resets",
+  passwordResetRequests: "/password-reset-requests",
+  passwordResetVerifications: "/password-reset-verifications",
+  register: "/users",
+} as const;
 
 export async function refreshAccessToken(): Promise<string | null> {
   const { data, status } = await apiClient.post<{ accessToken?: string }>(
-    "/sessions/current/access-token",
+    authRoutes.accessToken,
   );
   return status === 204 ? null : data.accessToken ?? null;
 }
 
-export async function logoutUser(): Promise<void> {
-  await apiClient.delete("/sessions/current");
-}
-
 export async function getCurrentUser(): Promise<AuthUser> {
-  const { data } = await apiClient.get<AuthUser>("/users/me");
-  return data;
+  const { data: currentUser } = await apiClient.get<AuthUser>(authRoutes.currentUser);
+  return currentUser;
 }
 
-export async function requestPasswordOtp(email: string): Promise<void> {
-  await apiClient.post("/password-reset-requests", { email });
+export async function loginUser(credentials: LoginPayload): Promise<LoginResponse> {
+  const { data: session } = await apiClient.post<LoginResponse>(authRoutes.login, credentials);
+  return session;
+}
+
+export async function registerUser(profile: RegisterPayload): Promise<AuthUser> {
+  const { data: createdUser } = await apiClient.post<AuthUser>(authRoutes.register, profile);
+  return createdUser;
+}
+
+export async function logoutUser(): Promise<void> {
+  await apiClient.delete(authRoutes.currentSession);
+}
+
+export async function requestPasswordOtp(emailAddress: string): Promise<void> {
+  await apiClient.post(authRoutes.passwordResetRequests, { email: emailAddress });
 }
 
 export async function verifyPasswordOtp(
-  email: string,
-  code: string,
+  emailAddress: string,
+  otpCode: string,
 ): Promise<PasswordOtpVerifyResponse> {
-  const { data } = await apiClient.post<PasswordOtpVerifyResponse>(
-    "/password-reset-verifications",
-    { email, code },
+  const { data: verification } = await apiClient.post<PasswordOtpVerifyResponse>(
+    authRoutes.passwordResetVerifications,
+    { email: emailAddress, code: otpCode },
   );
-  return data;
+  return verification;
 }
 
 export async function resetPasswordWithOtp(
-  email: string,
-  code: string,
-  newPassword: string,
+  emailAddress: string,
+  otpCode: string,
+  replacementPassword: string,
 ): Promise<void> {
-  await apiClient.post("/password-resets", { email, code, newPassword });
+  await apiClient.post(authRoutes.passwordReset, {
+    email: emailAddress,
+    code: otpCode,
+    newPassword: replacementPassword,
+  });
 }
 
 export async function changeCurrentPassword(
-  currentPassword: string,
-  newPassword: string,
+  currentPasswordValue: string,
+  nextPasswordValue: string,
 ): Promise<void> {
-  await apiClient.put("/users/me/password", { currentPassword, newPassword });
+  await apiClient.put(authRoutes.currentPassword, {
+    currentPassword: currentPasswordValue,
+    newPassword: nextPasswordValue,
+  });
 }

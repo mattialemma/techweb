@@ -1,5 +1,5 @@
-POSTGRES_DB=regexriddle
-POSTGRES_USER=regexriddle
+POSTGRES_DB=regexlab
+POSTGRES_USER=regexlab
 POSTGRES_PASSWORD=change-me-in-local-dev
 DB_HOST=db
 DB_PORT=5432
@@ -22,4 +22,4 @@ VITE_API_BASE_URL=/api
 VITE_API_PROXY_TARGET=http://backend:8000
 VITE_ALLOW_LAN_HOSTS=true
 EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
-DEFAULT_FROM_EMAIL=noreply@regexriddle.local
+DEFAULT_FROM_EMAIL=noreply@regexlab.local

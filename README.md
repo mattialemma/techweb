@@ -1,6 +1,6 @@
-# REGEXRIDDLE
+# REGEXLAB
 
-REGEXRIDDLE is a web platform for regex-based textual riddles. This repository is structured as a Dockerized monorepo with a Django REST backend, a React + TypeScript + Tailwind frontend, PostgreSQL, and an optional nginx reverse proxy.
+REGEXLAB is a web platform for regex-based textual riddles. This repository is structured as a Dockerized monorepo with a Django REST backend, a React + TypeScript + Tailwind frontend, PostgreSQL, and an optional nginx reverse proxy.
 
 ## Development
 

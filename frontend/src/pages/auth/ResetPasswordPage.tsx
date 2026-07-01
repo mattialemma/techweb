@@ -1,7 +1,7 @@
-// FILE: ResetPasswordPage.tsx
-// Purpose: Completes password recovery with OTP verification and a new password.
-// Layer: Page
-// Depends on: auth password reset API, URL query email, shared auth UI.
+// File: ResetPasswordPage.tsx
+// Scopo: Completa il recupero password con verifica OTP e nuova password.
+// Livello: Pagina
+// Dipende da: API recupero password, email nella query URL, UI autenticazione condivisa.
 
 import { useMemo, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -12,37 +12,46 @@ import { parseApiMessage } from "@shared/api";
 import { VALIDATION_LIMITS } from "@shared/lib/validation";
 import { AuthCard, Button, FormField, InlineMessage, Input, PasswordInput } from "@shared/ui";
 
+const emptyResetDraft = {
+  code: "",
+  newPassword: "",
+  confirmPassword: "",
+};
+
+type ResetDraft = typeof emptyResetDraft;
+
+function readEmailFromQuery(search: string): string {
+  return new URLSearchParams(search).get("email")?.trim().toLowerCase() ?? "";
+}
+
 export function ResetPasswordPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const email = useMemo(() => {
-    const search = new URLSearchParams(location.search);
-    return search.get("email")?.trim().toLowerCase() ?? "";
-  }, [location.search]);
-  const [values, setValues] = useState({
-    code: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
+  const email = useMemo(() => readEmailFromQuery(location.search), [location.search]);
+  const [resetDraft, setResetDraft] = useState<ResetDraft>(emptyResetDraft);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  function updateResetField(field: keyof ResetDraft, value: string) {
+    setResetDraft((current) => ({ ...current, [field]: value }));
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const nextErrors = validatePasswordReset({ email, ...values });
+    const nextErrors = validatePasswordReset({ email, ...resetDraft });
     setErrors(nextErrors);
     setMessage("");
     if (Object.keys(nextErrors).length > 0) return;
 
     setIsSubmitting(true);
     try {
-      const verification = await verifyPasswordOtp(email, values.code);
+      const verification = await verifyPasswordOtp(email, resetDraft.code);
       if (!verification.valid) {
         setErrors({ code: "Codice non valido o scaduto." });
         return;
       }
-      await resetPasswordWithOtp(email, values.code, values.newPassword);
+      await resetPasswordWithOtp(email, resetDraft.code, resetDraft.newPassword);
       setMessage("Password aggiornata. Torno al login...");
       setTimeout(() => navigate("/login", { replace: true }), 900);
     } catch (error) {
@@ -74,24 +83,24 @@ export function ResetPasswordPage() {
           <Input
             inputMode="numeric"
             maxLength={6}
-            value={values.code}
-            onChange={(event) => setValues({ ...values, code: event.target.value })}
+            value={resetDraft.code}
+            onChange={(event) => updateResetField("code", event.target.value)}
           />
         </FormField>
         <FormField label="Nuova password" error={errors.newPassword}>
           <PasswordInput
             autoComplete="new-password"
             maxLength={VALIDATION_LIMITS.password}
-            value={values.newPassword}
-            onChange={(event) => setValues({ ...values, newPassword: event.target.value })}
+            value={resetDraft.newPassword}
+            onChange={(event) => updateResetField("newPassword", event.target.value)}
           />
         </FormField>
         <FormField label="Conferma nuova password" error={errors.confirmPassword}>
           <PasswordInput
             autoComplete="new-password"
             maxLength={VALIDATION_LIMITS.password}
-            value={values.confirmPassword}
-            onChange={(event) => setValues({ ...values, confirmPassword: event.target.value })}
+            value={resetDraft.confirmPassword}
+            onChange={(event) => updateResetField("confirmPassword", event.target.value)}
           />
         </FormField>
         <Button type="submit" isLoading={isSubmitting} className="w-full" disabled={!email}>

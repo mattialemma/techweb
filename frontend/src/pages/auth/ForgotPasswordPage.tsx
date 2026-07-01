@@ -1,7 +1,7 @@
-// FILE: ForgotPasswordPage.tsx
-// Purpose: Starts the OTP password reset flow by requesting an email code.
-// Layer: Page
-// Depends on: auth API, auth validation, shared auth form components.
+// File: ForgotPasswordPage.tsx
+// Scopo: Avvia il flusso OTP di reset password richiedendo un codice email.
+// Livello: Pagina
+// Dipende da: API autenticazione, validazione autenticazione, componenti modulo condivisi.
 
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -11,27 +11,31 @@ import { validateEmail, type ValidationErrors } from "@features/auth";
 import { VALIDATION_LIMITS } from "@shared/lib/validation";
 import { AuthCard, Button, FormField, InlineMessage, Input } from "@shared/ui";
 
+function normalizeRecoveryEmail(value: string): string {
+  return value.trim().toLowerCase();
+}
+
 export function ForgotPasswordPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [emailDraft, setEmailDraft] = useState("");
   const [errors, setErrors] = useState<ValidationErrors>({});
-  const [submitError, setSubmitError] = useState("");
+  const [requestError, setRequestError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const emailError = validateEmail(email);
+    const emailError = validateEmail(emailDraft);
     setErrors(emailError ? { email: emailError } : {});
-    setSubmitError("");
+    setRequestError("");
     if (emailError) return;
 
     setIsSubmitting(true);
     try {
-      const normalizedEmail = email.trim().toLowerCase();
+      const normalizedEmail = normalizeRecoveryEmail(emailDraft);
       await requestPasswordOtp(normalizedEmail);
       navigate(`/forgot-password/verify?email=${encodeURIComponent(normalizedEmail)}`);
     } catch {
-      setSubmitError("Non riesco a inviare il codice in questo momento.");
+      setRequestError("Non riesco a inviare il codice in questo momento.");
     } finally {
       setIsSubmitting(false);
     }
@@ -43,14 +47,14 @@ export function ForgotPasswordPage() {
       subtitle="Inserisci l'email del tuo account: ti invieremo un codice di verifica."
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
-        {submitError ? <InlineMessage tone="error">{submitError}</InlineMessage> : null}
+        {requestError ? <InlineMessage tone="error">{requestError}</InlineMessage> : null}
         <FormField label="Email" error={errors.email}>
           <Input
             autoComplete="email"
             inputMode="email"
             maxLength={VALIDATION_LIMITS.email}
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            value={emailDraft}
+            onChange={(event) => setEmailDraft(event.target.value)}
           />
         </FormField>
         <Button type="submit" isLoading={isSubmitting} className="w-full">

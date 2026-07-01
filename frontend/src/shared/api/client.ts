@@ -1,11 +1,15 @@
-// FILE: client.ts
-// Purpose: Shared Axios clients for authenticated API calls, token refresh, and CSRF.
-// Layer: API client
-// Depends on: Axios, backend CSRF token endpoint, JWT access-token state.
+// File: client.ts
+// Scopo: Client Axios condivisi per chiamate API autenticate, refresh token e CSRF.
+// Livello: Client API
+// Dipende da: Axios, endpoint backend CSRF, stato del token JWT di accesso.
 
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "/api";
+const apiRoutes = {
+  csrfToken: "/security/csrf-token",
+  refreshAccessToken: "/sessions/current/access-token",
+} as const;
 
 type RetryableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
@@ -27,32 +31,46 @@ export function clearAccessToken(): void {
   accessToken = null;
 }
 
-const apiClient = axios.create({
-  baseURL: apiBaseUrl,
-  timeout: 10000,
-  withCredentials: true,
-});
+function makeHttpClient() {
+  return axios.create({
+    baseURL: apiBaseUrl,
+    timeout: 10000,
+    withCredentials: true,
+  });
+}
 
-const refreshClient = axios.create({
-  baseURL: apiBaseUrl,
-  timeout: 10000,
-  withCredentials: true,
-});
-
-const csrfClient = axios.create({
-  baseURL: apiBaseUrl,
-  timeout: 10000,
-  withCredentials: true,
-});
+const apiClient = makeHttpClient();
+const refreshClient = makeHttpClient();
+const csrfClient = makeHttpClient();
 
 function isUnsafeMethod(method: string | undefined): boolean {
   return ["post", "put", "patch", "delete"].includes((method ?? "get").toLowerCase());
 }
 
+function isSecurityTokenUrl(url: string | undefined): boolean {
+  return Boolean(url?.includes(apiRoutes.csrfToken));
+}
+
+function isSessionOrSecurityUrl(url: string): boolean {
+  return url.includes("/sessions") || url.includes(apiRoutes.csrfToken);
+}
+
+function applyBearerHeader(config: InternalAxiosRequestConfig): void {
+  if (!accessToken) return;
+  config.headers = config.headers ?? {};
+  config.headers.Authorization = `Bearer ${accessToken}`;
+}
+
+async function applyCsrfHeader(config: InternalAxiosRequestConfig): Promise<void> {
+  if (!isUnsafeMethod(config.method) || isSecurityTokenUrl(config.url)) return;
+  config.headers = config.headers ?? {};
+  config.headers["X-CSRFToken"] = await ensureCsrfToken();
+}
+
 async function ensureCsrfToken(): Promise<string> {
   if (!csrfPromise) {
     csrfPromise = csrfClient
-      .get<{ csrfToken: string }>("/security/csrf-token")
+      .get<{ csrfToken: string }>(apiRoutes.csrfToken)
       .then(({ data }) => {
         return data.csrfToken;
       })
@@ -66,12 +84,12 @@ async function ensureCsrfToken(): Promise<string> {
 
 async function refreshAccessToken(): Promise<string> {
   if (!refreshPromise) {
-    const token = await ensureCsrfToken();
+    const csrfToken = await ensureCsrfToken();
     refreshPromise = refreshClient
       .post<{ accessToken?: string }>(
-        "/sessions/current/access-token",
+        apiRoutes.refreshAccessToken,
         {},
-        { headers: { "X-CSRFToken": token } },
+        { headers: { "X-CSRFToken": csrfToken } },
       )
       .then(({ data, status }) => {
         if (status === 204 || !data.accessToken) {
@@ -94,14 +112,8 @@ async function refreshAccessToken(): Promise<string> {
 }
 
 apiClient.interceptors.request.use(async (config) => {
-  if (accessToken) {
-    config.headers = config.headers ?? {};
-    config.headers.Authorization = `Bearer ${accessToken}`;
-  }
-  if (isUnsafeMethod(config.method) && !config.url?.includes("/security/csrf-token")) {
-    config.headers = config.headers ?? {};
-    config.headers["X-CSRFToken"] = await ensureCsrfToken();
-  }
+  applyBearerHeader(config);
+  await applyCsrfHeader(config);
   return config;
 });
 
@@ -110,14 +122,13 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryableRequestConfig | undefined;
     const requestUrl = originalRequest?.url ?? "";
-    const isAuthRequest =
-      requestUrl.includes("/sessions") || requestUrl.includes("/security/csrf-token");
+    const shouldSkipRefresh = isSessionOrSecurityUrl(requestUrl);
 
     if (
       error.response?.status !== 401 ||
       !originalRequest ||
       originalRequest._retry ||
-      isAuthRequest
+      shouldSkipRefresh
     ) {
       return Promise.reject(error);
     }

@@ -1,4 +1,4 @@
-"""Django settings for the REGEXRIDDLE backend.
+"""Django settings for the REGEXLAB backend.
 
 Owns environment-driven runtime configuration for API, auth, storage, and mail.
 """
@@ -29,7 +29,7 @@ if not SECRET_KEY:
     SECRET_KEY = "dev-secret-key-change-me-please-rotate"
 
 ALLOWED_HOSTS = csv_env("ALLOWED_HOSTS", "localhost,127.0.0.1,backend")
-AUTH_REFRESH_COOKIE_NAME = os.getenv("AUTH_REFRESH_COOKIE_NAME", "regexriddle_refresh")
+AUTH_REFRESH_COOKIE_NAME = os.getenv("AUTH_REFRESH_COOKIE_NAME", "regexlab_refresh")
 AUTH_REFRESH_COOKIE_PATH = os.getenv("AUTH_REFRESH_COOKIE_PATH", "/api/sessions/current")
 AUTH_REFRESH_COOKIE_SECURE = env_flag("AUTH_REFRESH_COOKIE_SECURE", not DEBUG)
 AUTH_REFRESH_COOKIE_SAMESITE = os.getenv("AUTH_REFRESH_COOKIE_SAMESITE", "Lax")
@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
-    "apps.regexriddleapi",
+    "apps.regexlabapi",
 ]
 
 MIDDLEWARE = [
@@ -87,8 +87,8 @@ TEMPLATES = [
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME", os.getenv("POSTGRES_DB", "regexriddle")),
-        "USER": os.getenv("DB_USER", os.getenv("POSTGRES_USER", "regexriddle")),
+        "NAME": os.getenv("DB_NAME", os.getenv("POSTGRES_DB", "regexlab")),
+        "USER": os.getenv("DB_USER", os.getenv("POSTGRES_USER", "regexlab")),
         "PASSWORD": os.getenv("DB_PASSWORD", os.getenv("POSTGRES_PASSWORD", "")),
         "HOST": os.getenv("DB_HOST", "db"),
         "PORT": os.getenv("DB_PORT", "5432"),
@@ -121,7 +121,7 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv("DATA_UPLOAD_MAX_MEMORY_SIZE", str(3
 FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv("FILE_UPLOAD_MAX_MEMORY_SIZE", str(3 * 1024 * 1024)))
 CHALLENGE_REGEX_TIMEOUT_SECONDS = float(os.getenv("CHALLENGE_REGEX_TIMEOUT_SECONDS", "0.05"))
 
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@regexriddle.local")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@regexlab.local")
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 
 default_cors_origins = "http://localhost:5173,http://127.0.0.1:5173"
@@ -160,7 +160,7 @@ SIMPLE_JWT = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "REGEXRIDDLE API",
-    "DESCRIPTION": "API for the REGEXRIDDLE regex challenge platform.",
+    "TITLE": "REGEXLAB API",
+    "DESCRIPTION": "API for the REGEXLAB regex challenge platform.",
     "VERSION": "0.1.0",
 }

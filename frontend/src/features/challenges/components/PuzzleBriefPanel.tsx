@@ -1,8 +1,8 @@
-// FILE: PuzzleBriefPanel.tsx
-// Purpose: Displays challenge metadata, description, and public examples.
-// Layer: Feature UI component
-// Exports: PuzzleBriefPanel
-// Depends on: Challenge type, Avatar, Panel, formatter helpers
+// File: PuzzleBriefPanel.tsx
+// Scopo: Mostra metadati, descrizione ed esempi pubblici della sfida.
+// Livello: Componente UI funzionalita
+// Esporta: PuzzleBriefPanel
+// Dipende da: tipo Challenge, Avatar, Panel, funzioni formattazione
 
 import { formatDateTime } from "@shared/lib/formatters";
 import { Avatar, Panel } from "@shared/ui";
@@ -15,31 +15,39 @@ type PuzzleBriefPanelProps = {
   challenge: Challenge;
 };
 
-export function PuzzleBriefPanel({ challenge }: PuzzleBriefPanelProps) {
+function ChallengeAuthorStamp({ challenge }: { challenge: Challenge }) {
+  return (
+    <div className="flex items-center gap-3">
+      <Avatar src={challenge.author.avatarUrl} name={challenge.author.username} size="sm" />
+      <div className="min-w-0">
+        <p className="truncate text-lg font-black">{challenge.author.username}</p>
+        <p className="text-base text-zinc-400">{formatDateTime(challenge.createdAt)}</p>
+      </div>
+    </div>
+  );
+}
+
+export function PuzzleBriefPanel({ challenge: puzzle }: PuzzleBriefPanelProps) {
+  const descriptionBlock = puzzle.description ? (
+    <p className="mt-9 max-w-3xl break-words text-xl leading-8 text-zinc-300 [overflow-wrap:anywhere]">
+      {puzzle.description}
+    </p>
+  ) : (
+    <p className="mt-9 text-xl text-zinc-500">Nessuna descrizione.</p>
+  );
+
   return (
     <Panel padding="lg" className="min-h-[420px] sm:min-h-[500px] lg:min-h-[560px] xl:min-h-[520px]">
-      <div className="flex items-center gap-3">
-        <Avatar src={challenge.author.avatarUrl} name={challenge.author.username} size="sm" />
-        <div className="min-w-0">
-          <p className="truncate text-lg font-black">{challenge.author.username}</p>
-          <p className="text-base text-zinc-400">{formatDateTime(challenge.createdAt)}</p>
-        </div>
-      </div>
+      <ChallengeAuthorStamp challenge={puzzle} />
 
       <h1 className="mt-12 break-words text-4xl font-black tracking-tight [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl">
-        {challenge.title}
+        {puzzle.title}
       </h1>
-      {challenge.description ? (
-        <p className="mt-9 max-w-3xl break-words text-xl leading-8 text-zinc-300 [overflow-wrap:anywhere]">
-          {challenge.description}
-        </p>
-      ) : (
-        <p className="mt-9 text-xl text-zinc-500">Nessuna descrizione.</p>
-      )}
+      {descriptionBlock}
 
       <div className="mt-14 grid gap-4 sm:grid-cols-2">
-        <PuzzleSampleBadge label="passa" tone="positive" value={challenge.positiveExample} />
-        <PuzzleSampleBadge label="blocca" tone="negative" value={challenge.negativeExample} />
+        <PuzzleSampleBadge label="passa" tone="positive" value={puzzle.positiveExample} />
+        <PuzzleSampleBadge label="blocca" tone="negative" value={puzzle.negativeExample} />
       </div>
     </Panel>
   );

@@ -1,3 +1,8 @@
+// File: AuthCard.tsx
+// Scopo: Layout card centrato per pagine pubbliche di autenticazione.
+// Livello: Componente UI
+// Esporta: AuthCard
+
 import type { ReactNode } from "react";
 
 type AuthCardProps = {
@@ -6,13 +11,21 @@ type AuthCardProps = {
   children: ReactNode;
 };
 
-export function AuthCard({ title, subtitle, children }: AuthCardProps) {
+function AuthCardHeader({ subtitle, title }: Pick<AuthCardProps, "subtitle" | "title">) {
+  return (
+    <>
+      <p className="text-sm font-black uppercase tracking-[0.22em] text-lime-300">PATTERNLAB</p>
+      <h1 className="mt-4 text-3xl font-bold">{title}</h1>
+      <p className="mt-2 text-sm leading-6 text-zinc-300">{subtitle}</p>
+    </>
+  );
+}
+
+export function AuthCard({ children, subtitle, title }: AuthCardProps) {
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-12 text-white">
       <section className="w-full max-w-md rounded-lg border border-white/10 bg-zinc-950/58 p-6 shadow-2xl shadow-black/30 backdrop-blur sm:p-8">
-        <p className="text-sm font-black uppercase tracking-[0.22em] text-lime-300">PATTERNLAB</p>
-        <h1 className="mt-4 text-3xl font-bold">{title}</h1>
-        <p className="mt-2 text-sm leading-6 text-zinc-300">{subtitle}</p>
+        <AuthCardHeader subtitle={subtitle} title={title} />
         <div className="mt-6">{children}</div>
       </section>
     </main>

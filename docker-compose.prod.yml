@@ -19,7 +19,7 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - regexriddle_net
+      - regexlab_net
 
   backend:
     build:
@@ -60,7 +60,7 @@ services:
       db:
         condition: service_healthy
     networks:
-      - regexriddle_net
+      - regexlab_net
 
   frontend:
     build:
@@ -77,7 +77,7 @@ services:
       retries: 10
       start_period: 10s
     networks:
-      - regexriddle_net
+      - regexlab_net
 
   nginx:
     image: nginx:1.27-alpine
@@ -94,7 +94,7 @@ services:
       frontend:
         condition: service_healthy
     networks:
-      - regexriddle_net
+      - regexlab_net
 
 volumes:
   postgres_data:
@@ -102,5 +102,5 @@ volumes:
   static_data:
 
 networks:
-  regexriddle_net:
+  regexlab_net:
     driver: bridge

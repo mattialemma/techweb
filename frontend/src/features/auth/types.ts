@@ -1,3 +1,7 @@
+// File: types.ts
+// Scopo: Modella utente autenticato, payload auth e risposta sessione.
+// Livello: Tipi feature
+
 export type AuthUser = {
   userId: number;
   username: string;

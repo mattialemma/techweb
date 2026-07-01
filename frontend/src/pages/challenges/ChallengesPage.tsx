@@ -1,32 +1,74 @@
+// File: ChallengesPage.tsx
+// Scopo: Mostra catalogo sfide con ordinamento e paginazione.
+// Livello: Pagina privata
+// Dipende da: feature challenges, ContentStage, Panel
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { PuzzleTile, usePuzzleCatalog, type PuzzleOrdering } from "@features/challenges";
 import { Button, ContentStage, InlineMessage, Panel } from "@shared/ui";
 
-export function ChallengesPage() {
-  const [page, setPage] = useState(1);
-  const [ordering, setOrdering] = useState<PuzzleOrdering>("newest");
-  const { data, isLoading, isError } = usePuzzleCatalog(page, ordering);
-  const challenges = data?.results ?? [];
+type CatalogPagerProps = {
+  count: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  pageNumber: number;
+  visibleItems: number;
+  onNext: () => void;
+  onPrevious: () => void;
+};
 
-  function chooseOrdering(nextOrdering: PuzzleOrdering) {
-    setOrdering(nextOrdering);
-    setPage(1);
+function CatalogPager({
+  count,
+  hasNext,
+  hasPrevious,
+  pageNumber,
+  visibleItems,
+  onNext,
+  onPrevious,
+}: CatalogPagerProps) {
+  if (count <= visibleItems) return null;
+
+  return (
+    <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+      <p className="text-sm text-slate-400">
+        Pagina {pageNumber} - {count} enigmi totali
+      </p>
+      <div className="flex gap-2">
+        <Button disabled={!hasPrevious} variant="secondary" onClick={onPrevious}>
+          Precedente
+        </Button>
+        <Button disabled={!hasNext} variant="secondary" onClick={onNext}>
+          Successiva
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export function ChallengesPage() {
+  const [pageNumber, setPageNumber] = useState(1);
+  const [sortMode, setSortMode] = useState<PuzzleOrdering>("newest");
+  const { data, isLoading, isError } = usePuzzleCatalog(pageNumber, sortMode);
+  const catalogItems = data?.results ?? [];
+
+  function chooseCatalogOrdering(nextOrdering: PuzzleOrdering) {
+    setSortMode(nextOrdering);
+    setPageNumber(1);
   }
 
   return (
     <ContentStage
-        eyebrow="Enigmi"
-        title="Enigmi pubblicati"
-        description="Consulta gli enigmi disponibili. Le regex segrete e i controlli restano nascosti."
-        actions={
-          <Link to="/challenges/new">
-            <Button className="w-full sm:w-auto">Nuova sfida</Button>
-          </Link>
-        }
+      eyebrow="Enigmi"
+      title="Enigmi pubblicati"
+      description="Consulta gli enigmi disponibili. Le regex segrete e i controlli restano nascosti."
+      actions={
+        <Link to="/challenges/new">
+          <Button className="w-full sm:w-auto">Nuova sfida</Button>
+        </Link>
+      }
     >
-
       <section>
         <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-zinc-400">Ordina gli enigmi per data di pubblicazione.</p>
@@ -34,8 +76,8 @@ export function ChallengesPage() {
             <span>Ordina</span>
             <select
               className="min-h-10 rounded border border-white/10 bg-zinc-950/70 px-3 py-2 text-sm text-white outline-none transition hover:border-white/20 focus:border-lime-300 focus:ring-2 focus:ring-lime-300/20"
-              value={ordering}
-              onChange={(event) => chooseOrdering(event.target.value as PuzzleOrdering)}
+              value={sortMode}
+              onChange={(event) => chooseCatalogOrdering(event.target.value as PuzzleOrdering)}
             >
               <option value="newest">Piu nuove</option>
               <option value="oldest">Piu vecchie</option>
@@ -47,7 +89,7 @@ export function ChallengesPage() {
         {isError ? (
           <InlineMessage tone="error">Non riesco a caricare gli enigmi in questo momento.</InlineMessage>
         ) : null}
-        {!isLoading && !isError && challenges.length === 0 ? (
+        {!isLoading && !isError && catalogItems.length === 0 ? (
           <Panel as="div" padding="lg">
             <h2 className="text-xl font-bold">Nessuna sfida ancora</h2>
             <p className="mt-2 text-slate-300">Crea il primo enigma e rendi utile questa pagina.</p>
@@ -58,32 +100,20 @@ export function ChallengesPage() {
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {challenges.map((challenge) => (
-            <PuzzleTile key={challenge.challengeId} challenge={challenge} />
+          {catalogItems.map((catalogItem) => (
+            <PuzzleTile key={catalogItem.challengeId} challenge={catalogItem} />
           ))}
         </div>
-        {!isLoading && !isError && data && data.count > challenges.length ? (
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-slate-400">
-              Pagina {page} - {data.count} enigmi totali
-            </p>
-            <div className="flex gap-2">
-              <Button
-                disabled={!data.previous}
-                variant="secondary"
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-              >
-                Precedente
-              </Button>
-              <Button
-                disabled={!data.next}
-                variant="secondary"
-                onClick={() => setPage((current) => current + 1)}
-              >
-                Successiva
-              </Button>
-            </div>
-          </div>
+        {!isLoading && !isError && data ? (
+          <CatalogPager
+            count={data.count}
+            hasNext={Boolean(data.next)}
+            hasPrevious={Boolean(data.previous)}
+            pageNumber={pageNumber}
+            visibleItems={catalogItems.length}
+            onNext={() => setPageNumber((current) => current + 1)}
+            onPrevious={() => setPageNumber((current) => Math.max(1, current - 1))}
+          />
         ) : null}
       </section>
     </ContentStage>

@@ -1,7 +1,7 @@
-// FILE: navigation.ts
-// Purpose: Keeps shell navigation labels and routes out of the visual layout component.
-// Layer: App config
-// Exports: publicLinks, privateLinks
+// File: navigation.ts
+// Scopo: Tiene etichette e rotte della shell fuori dal componente visuale di layout.
+// Livello: Configurazione app
+// Esporta: publicLinks, privateLinks
 
 export type NavigationLink = {
   label: string;

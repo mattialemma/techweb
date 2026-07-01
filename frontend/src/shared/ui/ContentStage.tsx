@@ -1,8 +1,8 @@
-// FILE: ContentStage.tsx
-// Purpose: Standardizes page width, top spacing, and optional page headers.
-// Layer: UI layout primitive
-// Exports: ContentStage
-// Depends on: PageHeader
+// File: ContentStage.tsx
+// Scopo: Standardizza larghezza pagina, spaziatura alta e header opzionali.
+// Livello: Primitiva layout UI
+// Esporta: ContentStage
+// Dipende da: PageHeader
 
 import type { ReactNode } from "react";
 
@@ -17,6 +17,17 @@ type ContentStageProps = {
   title?: string;
 };
 
+function maybeRenderHeader({
+  actions,
+  description,
+  eyebrow,
+  title,
+}: Pick<ContentStageProps, "actions" | "description" | "eyebrow" | "title">) {
+  return eyebrow && title ? (
+    <PageHeader actions={actions} description={description} eyebrow={eyebrow} title={title} />
+  ) : null;
+}
+
 export function ContentStage({
   actions,
   children,
@@ -27,14 +38,7 @@ export function ContentStage({
 }: ContentStageProps) {
   return (
     <main className={`mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 ${className}`}>
-      {eyebrow && title ? (
-        <PageHeader
-          actions={actions}
-          description={description}
-          eyebrow={eyebrow}
-          title={title}
-        />
-      ) : null}
+      {maybeRenderHeader({ actions, description, eyebrow, title })}
       {children}
     </main>
   );

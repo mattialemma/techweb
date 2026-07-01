@@ -1,7 +1,7 @@
-// FILE: LandingPage.tsx
-// Purpose: Renders the public home page with authentication-aware calls to action.
-// Layer: Public page
-// Depends on: auth context, router links, shared buttons, landing visual scene
+// File: LandingPage.tsx
+// Scopo: Renderizza la home pubblica con azioni sensibili all'autenticazione.
+// Livello: Pagina pubblica
+// Dipende da: contesto autenticazione, link router, pulsanti condivisi, scena visuale home
 
 import { Link } from "react-router-dom";
 
@@ -9,6 +9,23 @@ import { useAuth } from "@features/auth";
 import { Button } from "@shared/ui";
 
 import { LandingPatternScene } from "./LandingPatternScene";
+
+function LandingActions({ isAuthenticated }: { isAuthenticated: boolean }) {
+  return (
+    <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+      <Link to={isAuthenticated ? "/challenges" : "/register"}>
+        <Button className="w-full sm:w-auto">
+          {isAuthenticated ? "Apri gli enigmi" : "Inizia una partita"}
+        </Button>
+      </Link>
+      <Link to="/how-to-play">
+        <Button variant="secondary" className="w-full sm:w-auto">
+          Leggi le regole
+        </Button>
+      </Link>
+    </div>
+  );
+}
 
 export function LandingPage() {
   const { isAuthenticated } = useAuth();
@@ -36,18 +53,7 @@ export function LandingPage() {
               usando solo feedback numerici.
             </p>
 
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link to={isAuthenticated ? "/challenges" : "/register"}>
-                <Button className="w-full sm:w-auto">
-                  {isAuthenticated ? "Apri gli enigmi" : "Inizia una partita"}
-                </Button>
-              </Link>
-              <Link to="/how-to-play">
-                <Button variant="secondary" className="w-full sm:w-auto">
-                  Leggi le regole
-                </Button>
-              </Link>
-            </div>
+            <LandingActions isAuthenticated={isAuthenticated} />
           </div>
         </div>
       </section>

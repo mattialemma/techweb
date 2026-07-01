@@ -1,3 +1,8 @@
+// File: Avatar.tsx
+// Scopo: Mostra immagine profilo o iniziali con fallback su errore immagine.
+// Livello: Primitiva UI
+// Esporta: Avatar
+
 import { useState } from "react";
 
 type AvatarProps = {
@@ -12,14 +17,18 @@ const sizes = {
   lg: "h-20 w-20 text-xl",
 };
 
-export function Avatar({ src, name = "User", size = "md" }: AvatarProps) {
-  const [failedSrc, setFailedSrc] = useState<string | null>(null);
-  const initials = name
+function initialsForName(name: string): string {
+  return name
     .split(" ")
     .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join("");
+}
+
+export function Avatar({ src, name = "User", size = "md" }: AvatarProps) {
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const fallbackText = initialsForName(name) || "U";
   const visibleSrc = src && src !== failedSrc ? src : null;
 
   return (
@@ -34,7 +43,7 @@ export function Avatar({ src, name = "User", size = "md" }: AvatarProps) {
           onError={() => setFailedSrc(visibleSrc)}
         />
       ) : (
-        initials || "U"
+        fallbackText
       )}
     </div>
   );

@@ -1,18 +1,20 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { PublicOnly, RequireAuth } from "./guards";
-import { LoginPage } from "@pages/auth/LoginPage";
+
 import { ForgotPasswordPage } from "@pages/auth/ForgotPasswordPage";
 import { RegisterPage } from "@pages/auth/RegisterPage";
-import { ResetPasswordPage } from "@pages/auth/ResetPasswordPage";
 import { ChallengesPage } from "@pages/challenges/ChallengesPage";
 import { ChallengeDetailPage } from "@pages/challenges/ChallengeDetailPage";
+import { ResetPasswordPage } from "@pages/auth/ResetPasswordPage";
 import { CreateChallengePage } from "@pages/challenges/CreateChallengePage";
-import { LeaderboardPage } from "@pages/leaderboard/LeaderboardPage";
-import { HowToPlayPage } from "@pages/public/HowToPlayPage";
+import { LoginPage } from "@pages/auth/LoginPage";
 import { LandingPage } from "@pages/public/LandingPage";
 import { AccountSettingsPage } from "@pages/settings/AccountSettingsPage";
 import { ApplicationChrome } from "@widgets/ApplicationChrome";
+import { LeaderboardPage } from "@pages/leaderboard/LeaderboardPage";
+import { HowToPlayPage } from "@pages/public/HowToPlayPage";
+
 
 export function AppRouter() {
   return (

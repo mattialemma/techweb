@@ -1,8 +1,8 @@
-// FILE: playwright.config.ts
-// Purpose: Configures Playwright E2E tests against the local Vite app.
-// Layer: Test config
-// Exports: Playwright defineConfig result
-// Depends on: @playwright/test
+// File: playwright.config.ts
+// Scopo: Configura i test E2E Playwright sull'app Vite locale.
+// Livello: Configurazione test
+// Esporta: risultato di defineConfig per Playwright
+// Dipende da: @playwright/test
 
 import { defineConfig, devices } from "@playwright/test";
 

@@ -1,7 +1,7 @@
-// FILE: publicContent.ts
-// Purpose: Stores public-page copy so layouts can focus on rendering.
-// Layer: Page content config
-// Exports: howToPlaySteps
+// File: publicContent.ts
+// Scopo: Centralizza i testi pubblici cosi i layout restano concentrati sulla resa.
+// Livello: Configurazione contenuti pagina
+// Esporta: howToPlaySteps
 
 export const howToPlaySteps = [
   {

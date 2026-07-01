@@ -1,3 +1,8 @@
+// File: Button.tsx
+// Scopo: Bottone condiviso con varianti visuali e stato loading.
+// Livello: Primitiva UI
+// Esporta: Button
+
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
@@ -18,6 +23,13 @@ const variants: Record<ButtonVariant, string> = {
     "border border-rose-400/40 bg-rose-500/10 text-rose-100 hover:border-rose-300/50 hover:bg-rose-500/20",
 };
 
+const baseButtonClass =
+  "inline-flex min-h-11 items-center justify-center rounded px-4 py-2 text-sm font-black transition duration-200 focus:outline-none focus:ring-2 focus:ring-lime-300/35 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60";
+
+function buttonClassName(variant: ButtonVariant, className: string): string {
+  return `${baseButtonClass} ${variants[variant]} ${className}`;
+}
+
 export function Button({
   variant = "primary",
   isLoading = false,
@@ -26,13 +38,16 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
+  const isDisabled = disabled || isLoading;
+  const label = isLoading ? "Caricamento..." : children;
+
   return (
     <button
-      className={`inline-flex min-h-11 items-center justify-center rounded px-4 py-2 text-sm font-black transition duration-200 focus:outline-none focus:ring-2 focus:ring-lime-300/35 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]} ${className}`}
-      disabled={disabled || isLoading}
+      className={buttonClassName(variant, className)}
+      disabled={isDisabled}
       {...props}
     >
-      {isLoading ? "Caricamento..." : children}
+      {label}
     </button>
   );
 }

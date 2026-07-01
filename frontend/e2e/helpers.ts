@@ -1,8 +1,8 @@
-// FILE: helpers.ts
-// Purpose: Provides reusable Playwright helpers for user-oriented E2E flows.
-// Layer: E2E test utilities
-// Exports: challenge and auth helpers used by the E2E test suites
-// Depends on: @playwright/test and the app's public auth pages
+// File: helpers.ts
+// Scopo: Fornisce funzioni Playwright riutilizzabili per i flussi E2E utente.
+// Livello: Utilita test E2E
+// Esporta: funzioni per sfide e autenticazione usate dalle suite E2E
+// Dipende da: @playwright/test e dalle pagine pubbliche di autenticazione dell'app
 
 import { expect, type Page } from "@playwright/test";
 
@@ -25,7 +25,7 @@ export type E2EChallenge = {
   title: string;
 };
 
-// Creates collision-resistant user data so tests can be rerun on the same dev DB.
+// Crea dati utente resistenti alle collisioni per rieseguire i test sullo stesso DB di sviluppo.
 export function createUniqueUser(): E2EUser {
   const id = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
@@ -38,7 +38,7 @@ export function createUniqueUser(): E2EUser {
   };
 }
 
-// Creates a valid regex challenge draft with a unique title for repeatable runs.
+// Crea una bozza valida di sfida regex con titolo univoco per esecuzioni ripetibili.
 export function createUniqueChallenge(): E2EChallenge {
   const id = Date.now();
 
@@ -53,7 +53,7 @@ export function createUniqueChallenge(): E2EChallenge {
   };
 }
 
-// Fills the challenge creation form without submitting it, so validation tests can reuse it.
+// Compila il modulo di creazione sfida senza inviarlo, cosi i test di validazione possono riusarlo.
 export async function fillChallengeForm(page: Page, challenge: E2EChallenge): Promise<void> {
   await page.getByLabel("Titolo").fill(challenge.title);
   await page.getByLabel("Descrizione").fill(challenge.description);
@@ -64,7 +64,7 @@ export async function fillChallengeForm(page: Page, challenge: E2EChallenge): Pr
   await page.getByPlaceholder("ab123", { exact: true }).fill(challenge.negativeControl);
 }
 
-// Publishes a valid challenge from the UI and waits until it appears in the catalog.
+// Pubblica una sfida valida dalla UI e attende che compaia nel catalogo.
 export async function publishChallenge(page: Page, challenge = createUniqueChallenge()): Promise<E2EChallenge> {
   await page.goto("/challenges/new");
 
@@ -81,7 +81,7 @@ export async function publishChallenge(page: Page, challenge = createUniqueChall
   return { ...challenge, detailPath: detailPath ?? undefined };
 }
 
-// Opens a challenge detail page from the catalog card with the matching title.
+// Apre il dettaglio sfida dalla scheda del catalogo con titolo corrispondente.
 export async function openChallengeDetail(
   page: Page,
   challenge: Pick<E2EChallenge, "detailPath" | "title">,
@@ -97,7 +97,7 @@ export async function openChallengeDetail(
   await expect(page.getByRole("heading", { name: challenge.title })).toBeVisible();
 }
 
-// Submits a proposed regex from the challenge detail workbench.
+// Invia una regex proposta dal pannello del dettaglio sfida.
 export async function submitAttempt(page: Page, proposedRegex: string): Promise<void> {
   const attemptResponse = page.waitForResponse(
     (response) =>
@@ -111,7 +111,7 @@ export async function submitAttempt(page: Page, proposedRegex: string): Promise<
   expect((await attemptResponse).status()).toBe(201);
 }
 
-// Fills the registration form without submitting it, useful for positive and negative tests.
+// Compila il modulo di registrazione senza inviarlo, utile per test positivi e negativi.
 export async function fillRegisterForm(page: Page, user: E2EUser): Promise<void> {
   await page.getByLabel("Username").fill(user.username);
   await page.getByLabel("Email").fill(user.email);
@@ -120,7 +120,7 @@ export async function fillRegisterForm(page: Page, user: E2EUser): Promise<void>
   await page.locator('input[autocomplete="new-password"]').fill(user.password);
 }
 
-// Logs in from the public login page and waits for the private catalog screen.
+// Effettua il login dalla pagina pubblica e attende la schermata privata del catalogo.
 export async function loginUser(page: Page, user: Pick<E2EUser, "email" | "password">): Promise<void> {
   await page.goto("/login");
 
@@ -132,7 +132,7 @@ export async function loginUser(page: Page, user: Pick<E2EUser, "email" | "passw
   await expect(page.getByRole("heading", { name: "Enigmi pubblicati" })).toBeVisible();
 }
 
-// Confirms the two-step logout control and waits until the public login screen is shown.
+// Conferma il logout in due passaggi e attende la schermata pubblica di login.
 export async function logoutUser(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Logout" }).click();
   await page.getByRole("button", { name: "Ok" }).click();
@@ -142,7 +142,7 @@ export async function logoutUser(page: Page): Promise<void> {
   await expect(page.getByRole("button", { name: "Login" })).toBeVisible();
 }
 
-// Registers through the UI and waits until the private challenges page is visible.
+// Registra un utente dalla UI e attende la pagina privata delle sfide.
 export async function registerUser(page: Page, user = createUniqueUser()): Promise<E2EUser> {
   await page.goto("/register");
 

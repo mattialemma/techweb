@@ -1,19 +1,31 @@
+// File: hooks.ts
+// Scopo: Espone mutation React Query per aggiornare profilo e avatar correnti.
+// Livello: Hook feature
+// Esporta: hook di aggiornamento profilo/avatar
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { meQueryKey } from "@features/auth/context";
 import type { AuthUser } from "@features/auth/types";
 import {
-  deleteCurrentUserAvatar,
-  updateCurrentUser,
-  uploadCurrentUserAvatar,
+  clearCurrentAvatar,
+  saveCurrentAvatar,
+  saveCurrentProfile,
 } from "./api";
+
+function replaceCurrentUserCache(
+  queryClient: ReturnType<typeof useQueryClient>,
+  nextUser: AuthUser,
+): void {
+  queryClient.setQueryData<AuthUser>(meQueryKey, nextUser);
+}
 
 export function useUpdateCurrentUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: updateCurrentUser,
-    onSuccess: (user) => {
-      queryClient.setQueryData<AuthUser>(meQueryKey, user);
+    mutationFn: saveCurrentProfile,
+    onSuccess: (savedUser) => {
+      replaceCurrentUserCache(queryClient, savedUser);
     },
   });
 }
@@ -21,9 +33,9 @@ export function useUpdateCurrentUser() {
 export function useUploadCurrentUserAvatar() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: uploadCurrentUserAvatar,
-    onSuccess: (user) => {
-      queryClient.setQueryData<AuthUser>(meQueryKey, user);
+    mutationFn: saveCurrentAvatar,
+    onSuccess: (savedUser) => {
+      replaceCurrentUserCache(queryClient, savedUser);
     },
   });
 }
@@ -31,10 +43,10 @@ export function useUploadCurrentUserAvatar() {
 export function useDeleteCurrentUserAvatar() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: deleteCurrentUserAvatar,
+    mutationFn: clearCurrentAvatar,
     onSuccess: () => {
-      queryClient.setQueryData<AuthUser | undefined>(meQueryKey, (current) =>
-        current ? { ...current, avatarUrl: null } : current,
+      queryClient.setQueryData<AuthUser | undefined>(meQueryKey, (cachedUser) =>
+        cachedUser ? { ...cachedUser, avatarUrl: null } : cachedUser,
       );
     },
   });

@@ -1,3 +1,8 @@
+// File: InlineMessage.tsx
+// Scopo: Messaggio inline condiviso per info, successo ed errore.
+// Livello: Primitiva UI
+// Esporta: InlineMessage
+
 type InlineMessageProps = {
   tone?: "info" | "success" | "error";
   children: string;
@@ -9,9 +14,11 @@ const tones = {
   error: "border-rose-300/20 bg-rose-300/10 text-rose-100 shadow-rose-950/20",
 };
 
+const baseMessageClass = "break-words rounded border px-3 py-2 text-sm shadow-lg [overflow-wrap:anywhere]";
+
 export function InlineMessage({ tone = "info", children }: InlineMessageProps) {
   return (
-    <p className={`break-words rounded border px-3 py-2 text-sm shadow-lg [overflow-wrap:anywhere] ${tones[tone]}`}>
+    <p className={`${baseMessageClass} ${tones[tone]}`}>
       {children}
     </p>
   );
