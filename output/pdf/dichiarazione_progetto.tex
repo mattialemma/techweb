@@ -1,0 +1,54 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[italian]{babel}
+\usepackage{geometry}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{helvet}
+
+\renewcommand{\familydefault}{\sfdefault}
+\geometry{margin=2.2cm}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\arrayrulewidth}{0.5pt}
+\renewcommand{\arraystretch}{1.38}
+
+\definecolor{accent}{HTML}{1F4E79}
+\definecolor{lightgray}{HTML}{F3F6FA}
+
+\begin{document}
+
+\begin{center}
+    {\Large\bfseries Dichiarazione progetto}\\[0.25cm]
+    {\normalsize Tecnologie Web}
+\end{center}
+
+\vspace{0.55cm}
+
+\begin{tabular}{>{\bfseries}p{3.75cm} p{11.05cm}}
+Nome & Mattia \\
+Cognome & Lemma \\
+Matricola & N86005170 \\
+Traccia scelta & REGEXLAB - piattaforma web per enigmi testuali basati su espressioni regolari. L'applicazione permette di proporre sfide, validare risposte tramite regex e gestire l'interazione tra utente e API. \\
+Back-end & Django come framework principale, Django REST Framework per esporre API REST, Simple JWT per l'autenticazione, PostgreSQL come database relazionale, Gunicorn per l'esecuzione in produzione e drf-spectacular per la documentazione delle API. \\
+Front-end & React con TypeScript per l'interfaccia utente, Vite per sviluppo e build, Tailwind CSS per lo stile, React Router per la navigazione, TanStack Query e Axios per la comunicazione con le API. \\
+Infrastruttura & Docker e Docker Compose per avviare l'intero ambiente in modo riproducibile; nginx come reverse proxy nello stack orientato alla produzione. \\
+\end{tabular}
+
+\vfill
+
+\begin{center}
+    \colorbox{lightgray}{%
+        \parbox{0.9\textwidth}{%
+            \small
+            Il progetto e' stato sviluppato separando back-end e front-end: il back-end espone API REST
+            con Django e gestisce dati, autenticazione e logica applicativa, mentre il front-end in React
+            e TypeScript costruisce l'interfaccia utente e comunica con le API. Docker Compose permette
+            di avviare in modo coerente tutti i servizi necessari, inclusi database e reverse proxy.
+        }%
+    }
+\end{center}
+
+\end{document}
