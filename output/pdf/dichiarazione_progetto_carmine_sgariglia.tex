@@ -1,0 +1,76 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[italian]{babel}
+\usepackage{geometry}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{helvet}
+\usepackage{tabularx}
+
+\renewcommand{\familydefault}{\sfdefault}
+\geometry{margin=2.1cm}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\renewcommand{\arraystretch}{1.25}
+
+\definecolor{maincolor}{HTML}{0F766E}
+\definecolor{softcolor}{HTML}{EAF7F5}
+\definecolor{linecolor}{HTML}{B8DCD7}
+
+\newcommand{\infobox}[2]{%
+    \textcolor{maincolor}{\bfseries #1}\\[-0.05cm]
+    #2
+}
+
+\begin{document}
+
+\colorbox{maincolor}{%
+    \parbox{\dimexpr\textwidth-2\fboxsep\relax}{%
+        \vspace{0.35cm}
+        \centering
+        {\color{white}\Large\bfseries Dichiarazione progetto}\\[0.15cm]
+        {\color{white}\normalsize Tecnologie Web}
+        \vspace{0.35cm}
+    }%
+}
+
+\vspace{0.65cm}
+
+\begin{tabularx}{\textwidth}{>{\bfseries\color{maincolor}}p{3.6cm} X}
+Studente & Carmine Sgariglia \\
+Matricola & N86 005069 \\
+Nome progetto & REGEXRIDDLE \\
+Traccia scelta & Piattaforma web dedicata a enigmi testuali basati su espressioni regolari, con interazione tra interfaccia utente, API e database. \\
+\end{tabularx}
+
+\vspace{0.55cm}
+
+\colorbox{softcolor}{%
+    \parbox{\dimexpr\textwidth-2\fboxsep\relax}{%
+        \vspace{0.25cm}
+        \infobox{Back-end}{Django e Django REST Framework sono stati utilizzati per realizzare le API REST, gestire la logica applicativa e collegare il progetto al database PostgreSQL. Simple JWT supporta l'autenticazione, drf-spectacular documenta le API e Gunicorn consente l'esecuzione nello stack di produzione.}
+        \vspace{0.35cm}
+
+        \infobox{Front-end}{L'interfaccia e' stata sviluppata con React e TypeScript. Vite gestisce ambiente di sviluppo e build, Tailwind CSS definisce lo stile, React Router organizza la navigazione, mentre Axios e TanStack Query curano lo scambio dati con il back-end.}
+        \vspace{0.35cm}
+
+        \infobox{Ambiente e distribuzione}{Docker Compose permette di avviare in modo riproducibile servizi applicativi, database e componenti di supporto. Nello stack orientato alla produzione nginx agisce da reverse proxy e serve l'applicazione front-end compilata.}
+        \vspace{0.25cm}
+    }%
+}
+
+\vfill
+
+\begin{center}
+    \begin{minipage}{0.88\textwidth}
+        \centering
+        \small
+        REGEXRIDDLE separa chiaramente responsabilita' front-end e back-end: il front-end offre
+        l'esperienza utente per risolvere gli enigmi, mentre il back-end espone servizi REST,
+        conserva i dati e valida le principali operazioni applicative.
+    \end{minipage}
+\end{center}
+
+\end{document}
