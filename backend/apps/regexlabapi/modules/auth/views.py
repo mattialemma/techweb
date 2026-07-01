@@ -10,6 +10,7 @@ from django.middleware.csrf import get_token
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
 from drf_spectacular.utils import extend_schema
+from rest_framework.exceptions import ValidationError
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
@@ -138,11 +139,10 @@ class AccessTokenView(APIView):
         serializer = TokenRefreshSerializer(data={"refresh": refresh_token})
         try:
             serializer.is_valid(raise_exception=True)
-        except TokenError:
-            return Response(
-                {"detail": "Invalid refresh token"},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
+        except (TokenError, ValidationError):
+            response = Response(status=status.HTTP_204_NO_CONTENT)
+            forget_refresh_token(response)
+            return response
 
         response = Response({"accessToken": serializer.validated_data["access"]})
         rotated_token = serializer.validated_data.get("refresh")
